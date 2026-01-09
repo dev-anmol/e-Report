@@ -8,12 +8,14 @@ const cookieParser = require("cookie-parser")
 
 const connectDB = require("./config/mongoConfig")
 const authRoutes = require("./routes/authRoutes")
+const caseRoutes = require("./routes/caseRoutes")
+const personRoutes = require("./routes/personRoutes")
 
 const app = express()
 
-// 🔑 MIDDLEWARE ORDER (IMPORTANT)
+// MIDDLEWARE ORDER (IMPORTANT)
 app.use(express.json())
-app.use(cookieParser())   // ✅ MUST COME BEFORE ROUTES
+app.use(cookieParser())  
 app.use(cors({
   origin: true,
   credentials: true
@@ -23,6 +25,9 @@ app.use(morgan("dev"))
 
 // Routes
 app.use("/", authRoutes)
+app.use("/", caseRoutes)
+app.use("/", personRoutes)
+
 
 connectDB()
 
