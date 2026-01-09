@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e4604d1d-45af-4f99-88bc-bfe63b64379f" name="Changes" comment="" />
+    <list default="true" id="e4604d1d-45af-4f99-88bc-bfe63b64379f" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/frontend/e-report/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/e-report/app/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/e-report/components/ui/ThemeToggle.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/e-report/components/ui/ThemeToggle.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/e-report/components/ui/userinfo.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/e-report/components/ui/userinfo.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/e-report/types/common.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/e-report/types/common.types.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -52,7 +57,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "ts.external.directory.path": "F:\\NextJS\\Reports Management System\\frontend\\e-report\\node_modules\\typescript\\lib"
+    "ts.external.directory.path": "F:\\NextJS\\e-Report\\frontend\\e-report\\node_modules\\typescript\\lib"
   }
 }]]></component>
   <component name="SharedIndexes">
@@ -71,6 +76,7 @@
       <option name="presentableId" value="Default" />
       <updated>1767806581415</updated>
       <workItem from="1767806583805" duration="2134000" />
+      <workItem from="1767978461130" duration="71000" />
     </task>
     <servers />
   </component>
