@@ -1,6 +1,7 @@
 'use client'
 
 import Header from "@/components/layout/header/app-header";
+import Footer from "@/components/layout/footer/app-footer";
 import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -15,16 +16,12 @@ export default function AppLayout({
         {/* Sidebar controls its own width */}
         <AppSidebar />
 
-        {/* Main content */}
         <div className="flex flex-col flex-1 min-w-0">
           <Header />
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 bg-neutral-50 dark:bg-[#0A0A0A] overflow-auto p-6">
             {children}
           </main>
-
-          <footer className="h-10 border-t text-xs flex items-center px-4">
-            © Police e-Report System
-          </footer>
+          <Footer />
         </div>
       </div>
     </SidebarProvider>

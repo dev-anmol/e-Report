@@ -39,16 +39,16 @@ const data = {
       hasChilds: true,
       items: [
         {
-          title: "Form-1",
-          url: "#",
+          title: "Section-1",
+          url: `/reports/section-1`,
         },
         {
-          title: "Form-2",
-          url: "#",
+          title: "Section-2",
+          url: "/reports/section-2",
         },
         {
-          title: "Form-3",
-          url: "#",
+          title: "Section-3",
+          url: "/reports/section-3",
         },
       ],
     },
