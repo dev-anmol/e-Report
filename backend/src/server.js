@@ -10,6 +10,7 @@ const connectDB = require("./config/mongoConfig")
 const authRoutes = require("./routes/authRoutes")
 const caseRoutes = require("./routes/caseRoutes")
 const personRoutes = require("./routes/personRoutes")
+const policeStationRoutes = require("./routes/policeStationRoutes")
 
 const app = express()
 
@@ -27,6 +28,7 @@ app.use(morgan("dev"))
 app.use("/", authRoutes)
 app.use("/", caseRoutes)
 app.use("/", personRoutes)
+app.use("/", policeStationRoutes)
 
 
 connectDB()
