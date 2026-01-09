@@ -1,16 +1,30 @@
-import jwtUtil from "../utils/jwt"
+const jwtUtil = require("../utils/jwt")
 
-export default function authMiddleware(req, res, next) {
+function authMiddleware(req, res, next) {
   try {
-    const auth = req.headers.authorization
-    if (!auth) throw new Error("Unauthorized")
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized"
+      })
+    }
 
-    const token = auth.split(" ")[1]
+    const token = authHeader.split(" ")[1]
     const payload = jwtUtil.verifyAccessToken(token)
 
-    req.user = payload
+    req.user = {
+      id: payload.id,
+      role: payload.role
+    }
+
     next()
   } catch (err) {
-    res.status(401).json({ success: false, message: "Unauthorized" })
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired token"
+    })
   }
 }
+
+module.exports = authMiddleware
