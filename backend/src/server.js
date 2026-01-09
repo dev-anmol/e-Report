@@ -8,6 +8,7 @@ const cookieParser = require("cookie-parser")
 
 const connectDB = require("./config/mongoConfig")
 const authRoutes = require("./routes/authRoutes")
+const caseRoutes = require("./routes/caseRoutes")
 const personRoutes = require("./routes/personRoutes")
 
 const app = express()
@@ -24,6 +25,7 @@ app.use(morgan("dev"))
 
 // Routes
 app.use("/", authRoutes)
+app.use("/", caseRoutes)
 app.use("/", personRoutes)
 
 

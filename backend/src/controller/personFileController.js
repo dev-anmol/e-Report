@@ -1,6 +1,6 @@
 const Person = require("../model/person")
 
-const { uploadFile, getSignedUrl } = require("../services/fileUploadService") 
+const { uploadFile, getSignedUrl } = require("../service/fileUploadService") 
 
 // Upload signature
 async function uploadSignature(req, res, next) {
