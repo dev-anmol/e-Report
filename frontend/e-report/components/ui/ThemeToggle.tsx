@@ -20,16 +20,16 @@ const themes = [
 ];
 
 export type ThemeSwitcherProps = {
-  value?: 'light' | 'dark' | 'system';
-  onChange?: (theme: 'light' | 'dark' | 'system') => void;
-  defaultValue?: 'light' | 'dark' | 'system';
+  value?: 'light' | 'dark'
+  onChange?: (theme: 'light' | 'dark') => void;
+  defaultValue?: 'light' | 'dark';
   className?: string;
 };
 
 export const ThemeSwitcher = ({
   value,
   onChange,
-  defaultValue = 'system',
+  defaultValue = 'light',
   className,
 }: ThemeSwitcherProps) => {
   const [theme, setTheme] = useControllableState({
@@ -40,7 +40,7 @@ export const ThemeSwitcher = ({
   const [mounted, setMounted] = useState(false);
 
   const handleThemeClick = useCallback(
-    (themeKey: 'light' | 'dark' | 'system') => {
+    (themeKey: 'light' | 'dark') => {
       setTheme(themeKey);
     },
     [setTheme]
@@ -70,7 +70,7 @@ export const ThemeSwitcher = ({
             aria-label={label}
             className="relative h-6 w-6 rounded-full"
             key={key}
-            onClick={() => handleThemeClick(key as 'light' | 'dark' | 'system')}
+            onClick={() => handleThemeClick(key as 'light' | 'dark')}
             type="button"
           >
             {isActive && (

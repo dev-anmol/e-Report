@@ -1,4 +1,7 @@
-import AppSideBar from "@/components/layout/sidebar/app-sidebar";
+'use client'
+
+import Header from "@/components/layout/header/app-header";
+import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function AppLayout({
@@ -8,16 +11,13 @@ export default function AppLayout({
 }) {
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full overflow-hidden">
+      <div className="flex h-screen w-full overflow-hidden google-sans-regular ">
         {/* Sidebar controls its own width */}
-        <AppSideBar />
+        <AppSidebar />
 
         {/* Main content */}
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="h-14 border-b flex items-center px-4">
-            <SidebarTrigger />
-          </header>
-
+          <Header />
           <main className="flex-1 overflow-auto p-6">
             {children}
           </main>
