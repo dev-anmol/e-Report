@@ -5,8 +5,10 @@ const {
   getPendingForms,
   approveForm,
   rejectForm,
-  issueForm
-} = require("../controllers/adminFormController")
+  issueForm,
+  getSubmittedForms,
+  getFormForAdmin
+} = require("../controller/adminFormController")
 
 const auth = require("../middleware/authMiddleware")
 const requireRole = require("../middleware/roleMiddleware")
@@ -14,9 +16,12 @@ const requireRole = require("../middleware/roleMiddleware")
 router.use(auth)
 router.use(requireRole("ADMIN"))
 
-router.get("/forms/pending", getPendingForms)
-router.post("/forms/:id/approve", approveForm)
-router.post("/forms/:id/reject", rejectForm)
-router.post("/forms/:id/issue", issueForm)
+router.get("/admin/forms/pending", getPendingForms)
+router.post("/admin/forms/:formId/approve", approveForm)
+router.post("/admin/forms/:formId/reject", rejectForm)
+router.post("/admin/forms/:formId/issue", issueForm)
+
+router.get("/admin/forms/submitted", getSubmittedForms)
+router.get("/admin/forms/:formId", getFormForAdmin)
 
 module.exports = router
