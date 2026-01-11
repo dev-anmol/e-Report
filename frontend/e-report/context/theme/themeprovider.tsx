@@ -12,7 +12,7 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setThemeState] = useState<Theme>("light");
+    const [theme, setThemeState] = useState<Theme>("dark");
 
     // Load theme on mount
     useEffect(() => {

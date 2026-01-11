@@ -4,12 +4,11 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import AppTable from "@/components/layout/table/app-table"
 import { useState } from "react"
+import Link from "next/link"
 
 export default function Section() {
 
     const [formName, setFormName] = useState<string>("Section-1")
-
-
     return <section className="flex flex-col space-y-14">
 
         <div className="flex flex-col space-y-8">
@@ -19,7 +18,11 @@ export default function Section() {
 
             <div className="flex flex-row items-center justify-between px-8">
                 <Input placeholder="search reports" className="w-[300px] border-neutral-400/80 dark:border-neutral-50/10" />
-                <Button>New</Button>
+                <Button asChild>
+                    <Link href='/reports/section-1/new'>
+                        New
+                    </Link>
+                </Button>
             </div>
         </div>
 
