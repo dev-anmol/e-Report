@@ -1,4 +1,5 @@
 const formService = require("../service/formService")
+const caseFileService = require("../service/caseFileService")
 const Form = require("../model/form")
 
 /**
@@ -136,11 +137,44 @@ async function getFormForAdmin(req, res, next) {
   }
 }
 
+async function issueCaseFileController(req, res) {
+  try {
+    const { caseId, caseFileNumber } = req.body
+
+    if (!caseId || !caseFileNumber) {
+      return res.status(400).json({
+        message: "caseId and caseFileNumber are required"
+      })
+    }
+
+    const issuedBy = req.user._id   // admin user
+
+    const caseFile = await caseFileService.issueCaseFile({
+      caseId,
+      caseFileNumber,
+      issuedBy
+    })
+
+    return res.status(201).json({
+      success: true,
+      caseFileId: caseFile._id,
+      pdfPath: caseFile.pdf.path
+    })
+  } catch (err) {
+    console.error(err)
+    return res.status(400).json({
+      success: false,
+      message: err.message
+    })
+  }
+}
+
 module.exports = {
   getPendingForms,
   approveForm,
   rejectForm,
   issueForm,
   getSubmittedForms,
-  getFormForAdmin
+  getFormForAdmin,
+  issueCaseFileController
 }

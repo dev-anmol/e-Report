@@ -7,7 +7,8 @@ const {
   rejectForm,
   issueForm,
   getSubmittedForms,
-  getFormForAdmin
+  getFormForAdmin,
+  issueCaseFileController
 } = require("../controller/adminFormController")
 
 const auth = require("../middleware/authMiddleware")
@@ -24,6 +25,6 @@ router.post("/admin/forms/:formId/issue", issueForm)
 
 router.get("/admin/forms/submitted", getSubmittedForms)
 router.get("/admin/forms/:formId", getFormForAdmin)
-router.post("/api/casefiles/issue", generate.generatePdfController)
+router.post("/api/casefiles/issue", issueCaseFileController)
 
 module.exports = router
