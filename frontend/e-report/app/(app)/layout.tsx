@@ -12,8 +12,7 @@ export default function AppLayout({
 }) {
   return (
     <SidebarProvider>
-      <div
-        className="flex h-screen w-full overflow-hidden google-sans-regular bg-gradient-to-br from-[#f8f9fb] via-[#eef0f6] to-[#fafbfc] dark:bg-gradient-to-br dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
+      <div className="flex h-screen w-full overflow-hidden google-sans-regular bg-gradient-to-r from-[#fef5ec] via-[#e2e4ed] via-[#dfe5f2] to-[#d0e3f5] dark:bg-gradient-to-br dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
         {/* Sidebar controls its own width */}
         <AppSidebar />
 

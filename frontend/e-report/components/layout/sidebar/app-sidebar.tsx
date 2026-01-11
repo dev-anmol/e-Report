@@ -20,8 +20,8 @@ import {
 // This is sample data.
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
+    name: "Anmol",
+    email: "anmol@gmail.com",
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
@@ -49,6 +49,14 @@ const data = {
         {
           title: "Section-3",
           url: "/reports/section-3",
+        },
+        {
+          title: "Section-4",
+          url: "/reports/section-4",
+        },
+        {
+          title: "Section-5",
+          url: "/reports/section-5",
         },
       ],
     },
