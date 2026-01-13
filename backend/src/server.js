@@ -26,6 +26,12 @@ app.use(cors({
 app.use(helmet())
 app.use(morgan("dev"))
 
+
+// Health check
+app.get("/", (req, res) => {
+  res.send("E-Report API is running 🚀");
+});
+
 // Routes
 app.use("/", authRoutes)
 app.use("/", caseRoutes)
@@ -35,8 +41,8 @@ app.use("/", formRoutes)
 app.use("/", adminRoutes)
 
 
-connectDB()
-
-app.listen(8081, () => {
-  console.log("Server running on port 8081")
-})
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+});
