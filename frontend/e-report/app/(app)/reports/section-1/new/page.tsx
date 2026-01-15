@@ -63,14 +63,16 @@ export default function SectionOneForm({
         <div className="w-full flex items-center justify-center">
             <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="md:w-full min-w-md rounded-lg dark:border dark:border-accent px-10 py-10"
+                className="md:w-full min-w-md border border-accent rounded-lg shadow-md bg-white/50 dark:bg-accent/10 dark:border px-10 py-10"
             >
                 <FieldGroup>
                     <FieldSet>
-                        <FieldLegend>Section-1 Form</FieldLegend>
-                        <FieldDescription>
-                            Enter the details of Police Station
-                        </FieldDescription>
+                        <div className="mb-4">
+                            <p className="font-normal text-2xl mb-1">Roznama Form</p>
+                            <FieldDescription>
+                                Enter the details of Police Station
+                            </FieldDescription>
+                        </div>
 
                         <FieldGroup>
                             <div className="grid grid-cols-2 gap-4">
@@ -80,7 +82,7 @@ export default function SectionOneForm({
                                     render={({ field }) => (
                                         <Field>
                                             <FieldLabel>Branch Case Number</FieldLabel>
-                                            <Input {...field} placeholder="1234" />
+                                            <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="1234" />
                                         </Field>
                                     )}
                                 />
@@ -91,7 +93,7 @@ export default function SectionOneForm({
                                     render={({ field }) => (
                                         <Field>
                                             <FieldLabel>Officer Id</FieldLabel>
-                                            <Input {...field} placeholder="1234" />
+                                            <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="1234" />
                                         </Field>
                                     )}
                                 />
@@ -104,7 +106,7 @@ export default function SectionOneForm({
                                     render={({ field }) => (
                                         <Field>
                                             <FieldLabel>Police Station Id</FieldLabel>
-                                            <Input {...field} />
+                                            <Input className="border border-neutral-400/50 dark:border-accent" {...field} />
                                             <FieldDescription>
                                                 Enter Police Station Id
                                             </FieldDescription>
@@ -118,7 +120,7 @@ export default function SectionOneForm({
                                     render={({ field }) => (
                                         <Field>
                                             <FieldLabel>Police Case Number</FieldLabel>
-                                            <Input {...field} />
+                                            <Input className="border border-neutral-400/50 dark:border-accent" {...field} />
                                             <FieldDescription>
                                                 Enter Police case number
                                             </FieldDescription>
@@ -138,7 +140,7 @@ export default function SectionOneForm({
                                                 value={field.value ?? ""}
                                                 onValueChange={field.onChange}
                                             >
-                                                <SelectTrigger>
+                                                <SelectTrigger className="border border-neutral-400/50 dark:border-accent">
                                                     <SelectValue placeholder="section-1" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -162,7 +164,7 @@ export default function SectionOneForm({
                                                 value={field.value ?? ""}
                                                 onValueChange={field.onChange}
                                             >
-                                                <SelectTrigger>
+                                                <SelectTrigger className="border border-neutral-400/50 dark:border-accent">
                                                     <SelectValue placeholder="Draft" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -187,7 +189,7 @@ export default function SectionOneForm({
                             render={({ field }) => (
                                 <Field>
                                     <FieldLabel>Comments</FieldLabel>
-                                    <Textarea {...field} className="resize-none" />
+                                    <Textarea className="border border-neutral-400/50 dark:border-accent resize-none" {...field} />
                                 </Field>
                             )}
                         />

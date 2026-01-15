@@ -68,7 +68,7 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
     return (
         <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="rounded-lg border border-accent p-6 shadow-2xs bg-white/50 dark:bg-accent/20"
+            className="rounded-lg border border-accent p-6 shadow-2xs bg-white/50 dark:bg-accent/10"
 
         >
             <FieldGroup>

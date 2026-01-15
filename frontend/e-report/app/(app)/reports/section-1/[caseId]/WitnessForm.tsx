@@ -68,7 +68,7 @@ export default function witnessesForm({ caseId }: { caseId: string }) {
     return (
         <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="rounded-lg border border-accent p-6 shadow-2xs bg-white/50 backdrop-blur-sm dark:bg-transparent"
+            className="rounded-lg border border-accent p-6 shadow-2xs bg-white/50 backdrop-blur-sm dark:bg-accent/20"
         >
             <FieldGroup>
                 <p className="font-normal text-2xl mb-4">Witness Details <span className="text-neutral-400">(optional)</span> </p>
