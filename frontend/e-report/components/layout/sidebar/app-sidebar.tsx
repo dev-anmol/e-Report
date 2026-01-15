@@ -39,23 +39,23 @@ const data = {
       hasChilds: true,
       items: [
         {
-          title: "Section-1",
+          title: "Roznama Form",
           url: `/reports/section-1`,
         },
         {
-          title: "Section-2",
+          title: "Notice Form",
           url: "/reports/section-2",
         },
         {
-          title: "Section-3",
+          title: "Interim Form",
           url: "/reports/section-3",
         },
         {
-          title: "Section-4",
+          title: "Statement Form",
           url: "/reports/section-4",
         },
         {
-          title: "Section-5",
+          title: "BondTime Form",
           url: "/reports/section-5",
         },
       ],
@@ -72,7 +72,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" {...props} className="dark:border dark:border-accent">
+    <Sidebar collapsible="icon" {...props} className="dark:border dark:border-accent dark:bg-accent/20">
       <SidebarHeader>
       </SidebarHeader>
       <SidebarContent>

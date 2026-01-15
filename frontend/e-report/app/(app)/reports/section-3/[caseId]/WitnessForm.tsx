@@ -20,17 +20,17 @@ import {
 } from "@/components/ui/select";
 
 import {
-    sectionOneDefendantsSchema,
-    SectionOneDefendantsValues,
-} from "@/types/section-1/sectionOneDefendantSchema";
+    sectionOneWitnessSchema,
+    SectionOneWitenessValues,
+} from "@/types/section-1/sectionOneWitnessSchema";
 
-import { createEmptyDefendant } from "@/utils/emptyDefendant";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/ui/shadcn-io/dropzone";
 import { UploadIcon } from "lucide-react";
+import { createEmptyWitness } from "@/utils/emptyWiteness";
 
-export default function DefendantsForm({ caseId }: { caseId: string }) {
+export default function witnessesForm({ caseId }: { caseId: string }) {
     const [document, setDocument] = useState<File[] | undefined>();
     const [photo, setPhoto] = useState<File[] | undefined>();
     const [signature, setSignature] = useState<File[] | undefined>();
@@ -48,44 +48,43 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
         setSignature(files);
     }
 
-    const form = useForm<SectionOneDefendantsValues>({
-        resolver: zodResolver(sectionOneDefendantsSchema),
+    const form = useForm<SectionOneWitenessValues>({
+        resolver: zodResolver(sectionOneWitnessSchema),
         defaultValues: {
             caseId,
-            defendants: [createEmptyDefendant()],
+            witnesses: [createEmptyWitness()],
         },
     });
 
     const { fields, append, remove } = useFieldArray({
         control: form.control,
-        name: "defendants",
+        name: "witnesses",
     });
 
-    const onSubmit = (values: SectionOneDefendantsValues) => {
-        console.log(values.defendants);
+    const onSubmit = (values: SectionOneWitenessValues) => {
+        console.log(values.witnesses);
     };
 
     return (
         <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="rounded-lg border border-accent p-6 shadow-2xs bg-white/50 dark:bg-accent/20"
-
+            className="rounded-lg border border-accent p-6 shadow-2xs bg-white/50 backdrop-blur-sm dark:bg-accent/10"
         >
             <FieldGroup>
-                <h3 className="font-normal text-2xl mb-4">Defendant Details</h3>
+                <p className="font-normal text-2xl mb-4">Witness Details <span className="text-neutral-400">(optional)</span> </p>
 
                 {fields.map((field, index) => (
                     <div key={field.id} className="space-y-4 border-b pb-6 mb-6">
                         <div className="grid grid-cols-2 gap-4">
                             <Controller
                                 control={form.control}
-                                name={`defendants.${index}.Name`}
+                                name={`witnesses.${index}.Name`}
                                 render={({ field }) => (
                                     <Field>
-                                        <FieldLabel>Defendant Name</FieldLabel>
+                                        <FieldLabel>Witness Name</FieldLabel>
                                         <Input {...field} placeholder="John" />
                                         <FieldDescription>
-                                            Enter Defendant Name
+                                            Enter Witness's Name
                                         </FieldDescription>
                                     </Field>
                                 )}
@@ -93,13 +92,13 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
 
                             <Controller
                                 control={form.control}
-                                name={`defendants.${index}.age`}
+                                name={`witnesses.${index}.age`}
                                 render={({ field }) => (
                                     <Field>
-                                        <FieldLabel>Defendant Age</FieldLabel>
+                                        <FieldLabel>Witness Age</FieldLabel>
                                         <Input {...field} placeholder="25" />
                                         <FieldDescription>
-                                            Defendant Defendant Age
+                                            Enter Witness's Age
                                         </FieldDescription>
                                     </Field>
                                 )}
@@ -109,10 +108,10 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
                         <div className="grid grid-cols-2 gap-4">
                             <Controller
                                 control={form.control}
-                                name={`defendants.${index}.gender`}
+                                name={`witnesses.${index}.gender`}
                                 render={({ field }) => (
                                     <Field>
-                                        <FieldLabel>Defendant Gender</FieldLabel>
+                                        <FieldLabel>Witness Gender</FieldLabel>
                                         <Select
                                             value={field.value ?? ""}
                                             onValueChange={field.onChange}
@@ -130,23 +129,20 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
                                 )}
                             />
 
-                            <Controller
-                                control={form.control}
-                                name={`defendants.${index}.mobile`}
-                                render={({ field }) => (
-                                    <Field>
-                                        <FieldLabel>Defendant Phone Number</FieldLabel>
-                                        <Input {...field} placeholder="8888888888" />
-                                    </Field>
-                                )}
-                            />
+                            <Field>
+                                <FieldLabel>Witness Phone Number</FieldLabel>
+                                <Input
+                                    {...form.register(`witnesses.${index}.mobile`)}
+                                    placeholder="8888888888"
+                                />
+                            </Field>
                         </div>
 
                         <Field>
-                            <FieldLabel>Defendant Address</FieldLabel>
+                            <FieldLabel>Witness Address</FieldLabel>
                             <Textarea {...field} placeholder="New Delhi" />
                             <FieldDescription>
-                                Enter Defendant Address
+                                Enter Witness Address
                             </FieldDescription>
                         </Field>
 
@@ -154,7 +150,7 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
 
                             <Controller
                                 control={form.control ?? ""}
-                                name={`defendants.${index}.document`}
+                                name={`witnesses.${index}.document`}
                                 render={({ field }) => (
                                     <Field>
                                         <Dropzone maxFiles={1} onDrop={handleDocument} src={document}>
@@ -163,7 +159,7 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
                                                     <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
                                                         <UploadIcon size={16} />
                                                     </div>
-                                                    <p className="font-medium text-sm">Upload Defendant Document</p>
+                                                    <p className="font-medium text-sm">Upload Witness Document</p>
                                                     <p className="text-xs text-muted-foreground">
                                                         PDF only
                                                     </p>
@@ -178,7 +174,7 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
 
                             <Controller
                                 control={form.control ?? ""}
-                                name={`defendants.${index}.photo`}
+                                name={`witnesses.${index}.photo`}
                                 render={({ field }) => (
                                     <Field>
                                         <Dropzone maxFiles={1} onDrop={handlePhoto} src={photo}>
@@ -187,7 +183,7 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
                                                     <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
                                                         <UploadIcon size={16} />
                                                     </div>
-                                                    <p className="font-medium truncate text-sm">Upload Defendant Photo</p>
+                                                    <p className="font-medium truncate text-sm">Upload Witness Photo</p>
                                                     <p className="text-xs text-muted-foreground">
                                                         JPG / PNG only
                                                     </p>
@@ -203,7 +199,7 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
 
                             <Controller
                                 control={form.control ?? ""}
-                                name={`defendants.${index}.signature`}
+                                name={`witnesses.${index}.signature`}
                                 render={({ field }) => (
                                     <Field>
                                         <Dropzone maxFiles={1} onDrop={handleSignature} src={signature}>
@@ -212,7 +208,7 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
                                                     <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
                                                         <UploadIcon size={16} />
                                                     </div>
-                                                    <p className="font-medium truncate text-sm">Upload Defendant Signature</p>
+                                                    <p className="font-medium truncate text-sm">Upload Witness Signature</p>
                                                     <p className="text-xs text-muted-foreground">
                                                         JPG / PNG only
                                                     </p>
@@ -233,7 +229,7 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
                                 variant="outline"
                                 onClick={() => remove(index)}
                             >
-                                Remove Defendant
+                                Remove Witness
                             </Button>
                         )}
                     </div>
@@ -243,15 +239,15 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
                 <div className="flex gap-4 items-center">
 
                     <Button type="submit" className="w-fit">
-                        Save Defendants
+                        Save witnesses
                     </Button>
 
                     <Button
                         type="button"
-                        onClick={() => append(createEmptyDefendant())}
+                        onClick={() => append(createEmptyWitness())}
                         className="w-fit"
                     >
-                        + Add Defendant
+                        + Add Witness
                     </Button>
                 </div>
 

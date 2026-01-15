@@ -8,8 +8,8 @@ import Link from "next/link"
 
 export default function Section() {
 
-    const [formName, setFormName] = useState<string>("Section-1")
-    return <section className="flex flex-col space-y-14">
+    const [formName, setFormName] = useState<string>("Roznama Form")
+    return <section className="flex flex-col space-y-14 p-6 rounded-lg border border-accent bg-white/50 dark:bg-accent/20">
 
         <div className="flex flex-col space-y-8">
             <div>
