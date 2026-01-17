@@ -13,7 +13,7 @@ const { createCase,getMyCases, getCaseById } = require("../controller/caseContro
 router.post(
   "/cases",
   auth,
-//   checkRole("OFFICER", "ADMIN"),
+  checkRole("OFFICER", "ADMIN"),
   createCase
 )
 

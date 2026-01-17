@@ -26,6 +26,11 @@ const policeStationSchema = new mongoose.Schema(
       trim: true
     },
 
+    taluka: {
+      type: String,
+      trim: true
+    },
+
     isActive: {
       type: Boolean,
       default: true,
