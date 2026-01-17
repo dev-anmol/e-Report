@@ -5,6 +5,7 @@ const cors = require("cors")
 const helmet = require("helmet")
 const morgan = require("morgan")
 const cookieParser = require("cookie-parser")
+const xss = require("xss-clean");
 
 const connectDB = require("./config/mongoConfig")
 const authRoutes = require("./routes/authRoutes")
@@ -13,6 +14,7 @@ const personRoutes = require("./routes/personRoutes")
 const policeStationRoutes = require("./routes/policeStationRoutes")
 const formRoutes = require("./routes/formRoutes")
 const adminRoutes = require("./routes/adminRoutes")
+const rateLimiter = require("./middleware/rateLimitterMiddleware");
 
 const app = express()
 
@@ -26,6 +28,21 @@ app.use(cors({
 app.use(helmet())
 app.use(morgan("dev"))
 
+
+app.use(
+  cors({
+    origin: ["http://localhost:3000"],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// XSS protection
+app.use(xss());
+
+// Global Rate Limiter
+app.use(rateLimiter);
 
 // Health check
 app.get("/", (req, res) => {
@@ -41,7 +58,7 @@ app.use("/", formRoutes)
 app.use("/", adminRoutes)
 
 
-const PORT = process.env.PORT || 8081;
+const PORT = process.env.PORT || 8011;
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
