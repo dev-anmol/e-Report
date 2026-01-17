@@ -40,3 +40,17 @@ export async function loginAction(
 
   redirect("/dashboard");
 }
+
+
+
+export async function logoutAction() {
+  try {
+    await serverFetch("/logout", { method: "POST" });
+  } catch {
+    // ignore backend failure
+  }
+
+  (await cookies()).delete("accessToken");
+  (await cookies()).delete("refreshToken");
+  redirect("/login");
+}
