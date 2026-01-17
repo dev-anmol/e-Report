@@ -23,9 +23,10 @@ export async function loginAction(
       method: "POST",
       body: { email, password },
     });
-  } catch {
+  } catch(error) {
     return { error: "Invalid credentials" };
   }
+
 
   if (!res.success || !res.accessToken) {
     return { error: "Invalid credentials" };
@@ -47,7 +48,6 @@ export async function logoutAction() {
   try {
     await serverFetch("/logout", { method: "POST" });
   } catch {
-    // ignore backend failure
   }
 
   (await cookies()).delete("accessToken");
