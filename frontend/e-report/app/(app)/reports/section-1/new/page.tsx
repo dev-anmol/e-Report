@@ -29,34 +29,39 @@ import {
     SectionOneValues,
 } from "@/types/section-1/sectionOneSchema";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { fetchPoliceStations } from "@/lib/api/policeStation";
+import { useQuery } from "@tanstack/react-query";
 
 export default function SectionOneForm({
     onSuccess,
 }: {
     onSuccess: (caseId: string) => void;
 }) {
+
+
+    const {
+        data: stations = [],
+        isLoading,
+        isError,
+    } = useQuery({
+        queryKey: ["policeStations"],
+        queryFn: fetchPoliceStations,
+        staleTime: 5 * 60 * 1000,
+    });
+
     const form = useForm<SectionOneValues>({
         resolver: zodResolver(sectionOneSchema),
         defaultValues: {
             branchCaseNumber: "",
-            officerId: "",
             policeStationId: "",
             policeCaseNumber: "",
-            reportType: "",
             status: "DRAFT",
-            comments: "",
         },
     });
     const router = useRouter();
     const onSubmit = async (values: SectionOneValues) => {
-        // const res = await fetch("/api/cases", {
-        //     method: "POST",
-        //     body: JSON.stringify(values),
-        // });
-
-        // const data = await res.json();
-        const caseId = "5";
-        router.push(`/reports/section-1/${caseId}`)
+        console.log(values);
     };
 
     return (
@@ -68,36 +73,23 @@ export default function SectionOneForm({
                 <FieldGroup>
                     <FieldSet>
                         <div className="mb-4">
-                            <p className="font-normal text-2xl mb-1">Roznama Form</p>
+                            <p className="font-normal text-2xl mb-1">Case Form</p>
                             <FieldDescription>
                                 Enter the details of Police Station
                             </FieldDescription>
                         </div>
 
                         <FieldGroup>
-                            <div className="grid grid-cols-2 gap-4">
-                                <Controller
-                                    control={form.control}
-                                    name="branchCaseNumber"
-                                    render={({ field }) => (
-                                        <Field>
-                                            <FieldLabel>Branch Case Number</FieldLabel>
-                                            <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="1234" />
-                                        </Field>
-                                    )}
-                                />
-
-                                <Controller
-                                    control={form.control}
-                                    name="officerId"
-                                    render={({ field }) => (
-                                        <Field>
-                                            <FieldLabel>Officer Id</FieldLabel>
-                                            <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="1234" />
-                                        </Field>
-                                    )}
-                                />
-                            </div>
+                            <Controller
+                                control={form.control}
+                                name="branchCaseNumber"
+                                render={({ field }) => (
+                                    <Field>
+                                        <FieldLabel>Branch Case Number</FieldLabel>
+                                        <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="1234" />
+                                    </Field>
+                                )}
+                            />
 
                             <div className="grid grid-cols-2 gap-4">
                                 <Controller
@@ -105,10 +97,36 @@ export default function SectionOneForm({
                                     name="policeStationId"
                                     render={({ field }) => (
                                         <Field>
-                                            <FieldLabel>Police Station Id</FieldLabel>
-                                            <Input className="border border-neutral-400/50 dark:border-accent" {...field} />
+                                            <FieldLabel>Police Station</FieldLabel>
+
+                                            <Select
+                                                value={field.value ?? ""}
+                                                onValueChange={field.onChange}
+                                            >
+                                                <SelectTrigger className="border border-neutral-400/50 dark:border-accent">
+                                                    <SelectValue
+                                                        placeholder={
+                                                            isLoading
+                                                                ? "Loading police stations..."
+                                                                : "Select police station"
+                                                        }
+                                                    />
+                                                </SelectTrigger>
+
+                                                <SelectContent>
+                                                    {stations.map((station: any) => (
+                                                        <SelectItem
+                                                            key={station.id}
+                                                            value={station.id}
+                                                        >
+                                                            {station.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+
                                             <FieldDescription>
-                                                Enter Police Station Id
+                                                Select Police Station
                                             </FieldDescription>
                                         </Field>
                                     )}
@@ -119,7 +137,7 @@ export default function SectionOneForm({
                                     name="policeCaseNumber"
                                     render={({ field }) => (
                                         <Field>
-                                            <FieldLabel>Police Case Number</FieldLabel>
+                                            <FieldLabel>Police Station Case No.</FieldLabel>
                                             <Input className="border border-neutral-400/50 dark:border-accent" {...field} />
                                             <FieldDescription>
                                                 Enter Police case number
@@ -128,72 +146,32 @@ export default function SectionOneForm({
                                     )}
                                 />
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <Controller
-                                    control={form.control}
-                                    name="reportType"
-                                    render={({ field }) => (
-                                        <Field>
-                                            <FieldLabel>Report Type</FieldLabel>
-                                            <Select
-                                                value={field.value ?? ""}
-                                                onValueChange={field.onChange}
-                                            >
-                                                <SelectTrigger className="border border-neutral-400/50 dark:border-accent">
-                                                    <SelectValue placeholder="section-1" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="01">01</SelectItem>
-                                                    <SelectItem value="02">02</SelectItem>
-                                                    <SelectItem value="03">03</SelectItem>
-                                                    <SelectItem value="04">04</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </Field>
-                                    )}
-                                />
-
-                                <Controller
-                                    control={form.control}
-                                    name="status"
-                                    render={({ field }) => (
-                                        <Field>
-                                            <FieldLabel>Status</FieldLabel>
-                                            <Select
-                                                value={field.value ?? ""}
-                                                onValueChange={field.onChange}
-                                            >
-                                                <SelectTrigger className="border border-neutral-400/50 dark:border-accent">
-                                                    <SelectValue placeholder="Draft" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="DRAFT">Draft</SelectItem>
-                                                    <SelectItem value="PENDING">Pending</SelectItem>
-                                                    <SelectItem value="REJECTED">Rejected</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </Field>
-                                    )}
-                                />
-                            </div>
+                            <Controller
+                                control={form.control}
+                                name="status"
+                                render={({ field }) => (
+                                    <Field>
+                                        <FieldLabel>Status</FieldLabel>
+                                        <Select
+                                            value={field.value ?? ""}
+                                            onValueChange={field.onChange}
+                                        >
+                                            <SelectTrigger className="border border-neutral-400/50 dark:border-accent">
+                                                <SelectValue placeholder="Draft" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="DRAFT">Draft</SelectItem>
+                                                <SelectItem value="PENDING">Pending</SelectItem>
+                                                <SelectItem value="REJECTED">Rejected</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </Field>
+                                )}
+                            />
                         </FieldGroup>
                     </FieldSet>
 
                     <FieldSeparator />
-
-                    <FieldSet>
-                        <Controller
-                            control={form.control}
-                            name="comments"
-                            render={({ field }) => (
-                                <Field>
-                                    <FieldLabel>Comments</FieldLabel>
-                                    <Textarea className="border border-neutral-400/50 dark:border-accent resize-none" {...field} />
-                                </Field>
-                            )}
-                        />
-                    </FieldSet>
 
                     <Field orientation="horizontal">
                         <Button type="submit">Submit</Button>
