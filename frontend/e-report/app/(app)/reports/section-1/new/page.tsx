@@ -1,18 +1,18 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm } from "react-hook-form";
 
 import {
     Field,
     FieldDescription,
     FieldGroup,
     FieldLabel,
-    FieldLegend,
     FieldSeparator,
-    FieldSet,
+    FieldSet
 } from "@/components/ui/field";
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -21,42 +21,64 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 
+import { createCase } from "@/lib/actions/createCase";
+import { fetchPoliceStations } from "@/lib/api/policeStation";
 import {
     sectionOneSchema,
     SectionOneValues,
 } from "@/types/section-1/sectionOneSchema";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+export default function SectionOneForm() {
+    const {
+        data: stations = [],
+        isLoading,
+        isError,
+    } = useQuery({
+        queryKey: ["policeStations"],
+        queryFn: fetchPoliceStations,
+        staleTime: 5 * 60 * 1000,
+    });
 
-export default function SectionOneForm({
-    onSuccess,
-}: {
-    onSuccess: (caseId: string) => void;
-}) {
+    const [isPending, startTransition] = useTransition();
+    const router = useRouter();
+
     const form = useForm<SectionOneValues>({
         resolver: zodResolver(sectionOneSchema),
         defaultValues: {
             branchCaseNumber: "",
-            officerId: "",
             policeStationId: "",
             policeCaseNumber: "",
-            reportType: "",
+            sections: "",
             status: "DRAFT",
-            comments: "",
         },
     });
-    const router = useRouter();
-    const onSubmit = async (values: SectionOneValues) => {
-        // const res = await fetch("/api/cases", {
-        //     method: "POST",
-        //     body: JSON.stringify(values),
-        // });
 
-        // const data = await res.json();
-        const caseId = "5";
-        router.push(`/reports/section-1/${caseId}`)
+    const onSubmit = async (values: SectionOneValues) => {
+        startTransition(async () => {
+            try {
+                const sectionList = values.sections.split(",");
+                console.log(sectionList)
+                const result = await createCase({
+                    branchCaseNumber: values.branchCaseNumber,
+                    policeStationCaseNumber: values.policeCaseNumber,
+                    policeStationId: values.policeStationId,
+                    sections: sectionList,
+                });
+
+                if (result.success) {
+                    console.log("Case created successfully:", result.data);
+                    router.push(`/reports/section-1/${result.data?.caseId}`);
+                    form.reset();
+                } else {
+                    console.error("Error creating case:", result.error);
+                }
+            } catch (error) {
+                console.error("Unexpected error:", error);
+            }
+        });
     };
 
     return (
@@ -68,36 +90,23 @@ export default function SectionOneForm({
                 <FieldGroup>
                     <FieldSet>
                         <div className="mb-4">
-                            <p className="font-normal text-2xl mb-1">Roznama Form</p>
+                            <p className="font-normal text-2xl mb-1">Case Form</p>
                             <FieldDescription>
                                 Enter the details of Police Station
                             </FieldDescription>
                         </div>
 
                         <FieldGroup>
-                            <div className="grid grid-cols-2 gap-4">
-                                <Controller
-                                    control={form.control}
-                                    name="branchCaseNumber"
-                                    render={({ field }) => (
-                                        <Field>
-                                            <FieldLabel>Branch Case Number</FieldLabel>
-                                            <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="1234" />
-                                        </Field>
-                                    )}
-                                />
-
-                                <Controller
-                                    control={form.control}
-                                    name="officerId"
-                                    render={({ field }) => (
-                                        <Field>
-                                            <FieldLabel>Officer Id</FieldLabel>
-                                            <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="1234" />
-                                        </Field>
-                                    )}
-                                />
-                            </div>
+                            <Controller
+                                control={form.control}
+                                name="branchCaseNumber"
+                                render={({ field }) => (
+                                    <Field>
+                                        <FieldLabel>Branch Case Number</FieldLabel>
+                                        <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="1234" />
+                                    </Field>
+                                )}
+                            />
 
                             <div className="grid grid-cols-2 gap-4">
                                 <Controller
@@ -105,22 +114,49 @@ export default function SectionOneForm({
                                     name="policeStationId"
                                     render={({ field }) => (
                                         <Field>
-                                            <FieldLabel>Police Station Id</FieldLabel>
-                                            <Input className="border border-neutral-400/50 dark:border-accent" {...field} />
+                                            <FieldLabel>Police Station</FieldLabel>
+
+                                            <Select
+                                                value={field.value}
+                                                onValueChange={field.onChange}
+                                            >
+                                                <SelectTrigger className="border border-neutral-400/50 dark:border-accent">
+                                                    <SelectValue
+                                                        placeholder={
+                                                            isLoading
+                                                                ? "Loading police stations..."
+                                                                : "Select police station"
+                                                        }
+                                                    />
+                                                </SelectTrigger>
+
+                                                <SelectContent>
+                                                    {stations.map((station: any) => (
+                                                        <SelectItem
+                                                            key={station._id}
+                                                            value={station._id}
+                                                        >
+                                                            {station.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+
                                             <FieldDescription>
-                                                Enter Police Station Id
+                                                Select Police Station
                                             </FieldDescription>
                                         </Field>
                                     )}
                                 />
+
 
                                 <Controller
                                     control={form.control}
                                     name="policeCaseNumber"
                                     render={({ field }) => (
                                         <Field>
-                                            <FieldLabel>Police Case Number</FieldLabel>
-                                            <Input className="border border-neutral-400/50 dark:border-accent" {...field} />
+                                            <FieldLabel>Police Station Case No.</FieldLabel>
+                                            <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="Enter Police Station Case No." />
                                             <FieldDescription>
                                                 Enter Police case number
                                             </FieldDescription>
@@ -129,75 +165,52 @@ export default function SectionOneForm({
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <Controller
-                                    control={form.control}
-                                    name="reportType"
-                                    render={({ field }) => (
-                                        <Field>
-                                            <FieldLabel>Report Type</FieldLabel>
-                                            <Select
-                                                value={field.value ?? ""}
-                                                onValueChange={field.onChange}
-                                            >
-                                                <SelectTrigger className="border border-neutral-400/50 dark:border-accent">
-                                                    <SelectValue placeholder="section-1" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="01">01</SelectItem>
-                                                    <SelectItem value="02">02</SelectItem>
-                                                    <SelectItem value="03">03</SelectItem>
-                                                    <SelectItem value="04">04</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </Field>
-                                    )}
-                                />
+                            <Controller
+                                control={form.control}
+                                name="sections"
+                                render={({ field }) => (
+                                    <Field>
+                                        <FieldLabel>Sections</FieldLabel>
+                                        <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="Enter Case Sections, separated by commas" />
+                                        <FieldDescription>
+                                            Enter Case Sections
+                                        </FieldDescription>
+                                    </Field>
+                                )}
+                            />
 
-                                <Controller
-                                    control={form.control}
-                                    name="status"
-                                    render={({ field }) => (
-                                        <Field>
-                                            <FieldLabel>Status</FieldLabel>
-                                            <Select
-                                                value={field.value ?? ""}
-                                                onValueChange={field.onChange}
-                                            >
-                                                <SelectTrigger className="border border-neutral-400/50 dark:border-accent">
-                                                    <SelectValue placeholder="Draft" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="DRAFT">Draft</SelectItem>
-                                                    <SelectItem value="PENDING">Pending</SelectItem>
-                                                    <SelectItem value="REJECTED">Rejected</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </Field>
-                                    )}
-                                />
-                            </div>
+                            <Controller
+                                control={form.control}
+                                name="status"
+                                render={({ field }) => (
+                                    <Field>
+                                        <FieldLabel>Status</FieldLabel>
+                                        <Select
+                                            value={field.value ?? ""}
+                                            onValueChange={field.onChange}
+                                        >
+                                            <SelectTrigger className="border border-neutral-400/50 dark:border-accent">
+                                                <SelectValue placeholder="Draft" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem key="DRAFT" value="DRAFT">Draft</SelectItem>
+                                                <SelectItem key="PENDING" value="PENDING">Pending</SelectItem>
+                                                <SelectItem key="REJECTED" value="REJECTED">Rejected</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </Field>
+                                )}
+                            />
                         </FieldGroup>
                     </FieldSet>
 
                     <FieldSeparator />
 
-                    <FieldSet>
-                        <Controller
-                            control={form.control}
-                            name="comments"
-                            render={({ field }) => (
-                                <Field>
-                                    <FieldLabel>Comments</FieldLabel>
-                                    <Textarea className="border border-neutral-400/50 dark:border-accent resize-none" {...field} />
-                                </Field>
-                            )}
-                        />
-                    </FieldSet>
-
                     <Field orientation="horizontal">
-                        <Button type="submit">Submit</Button>
-                        <Button type="button" variant="outline">
+                        <Button type="submit" disabled={isPending}>
+                            {isPending ? "Submitting..." : "Submit"}
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => form.reset()}>
                             Cancel
                         </Button>
                     </Field>
