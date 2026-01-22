@@ -23,27 +23,35 @@ import {
 import { createEmptyApplicant } from "@/utils/emptyApplicant";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/ui/shadcn-io/dropzone';
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { UploadIcon } from "lucide-react";
-
-
+import { createApplicant } from "@/lib/actions/createApplicant";
 
 export default function ApplicantForm({ caseId }: { caseId: string }) {
     const [document, setDocument] = useState<File[] | undefined>();
     const [photo, setPhoto] = useState<File[] | undefined>();
     const [signature, setSignature] = useState<File[] | undefined>();
-
+    const [isPending, startTransition] = useTransition();
 
     const handleDocument = (files: File[]) => {
         setDocument(files);
+        if (files.length > 0) {
+            form.setValue("applicant.document", files[0], { shouldValidate: true });
+        }
     };
 
     const handlePhoto = (files: File[]) => {
         setPhoto(files);
+        if (files.length > 0) {
+            form.setValue("applicant.photo", files[0], { shouldValidate: true });
+        }
     }
 
     const handleSignature = (files: File[]) => {
         setSignature(files);
+        if (files.length > 0) {
+            form.setValue("applicant.signature", files[0], { shouldValidate: true });
+        }
     }
 
     const form = useForm<SectionOneApplicantValues>({
@@ -55,17 +63,59 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
     });
 
     const onSubmit = async (values: SectionOneApplicantValues) => {
-        console.log(values);
+        // Prevent default focus behavior
+        // const formElement = document.activeElement as HTMLElement;
+        // if (formElement) {
+        //     formElement.blur();
+        // }
 
-        await fetch(`/api/cases/${caseId}/applicant`, {
-            method: "POST",
-            body: JSON.stringify(values),
+        startTransition(async () => {
+            try {
+                // Get files from state or form values
+                const photoFile = photo?.[0] || values.applicant.photo;
+                const signatureFile = signature?.[0] || values.applicant.signature;
+                const documentFile = document?.[0] || values.applicant.document;
+
+                if (!photoFile || !signatureFile || !documentFile) {
+                    console.error("All files are required");
+                    return;
+                }
+
+                const result = await createApplicant({
+                    caseId: values.caseId,
+                    name: values.applicant.Name,
+                    age: values.applicant.age,
+                    gender: values.applicant.gender,
+                    mobile: values.applicant.mobile,
+                    address: values.applicant.address,
+                    role: values.applicant.role,
+                    photo: photoFile,
+                    signature: signatureFile,
+                    document: documentFile,
+                });
+
+                if (result.success) {
+                    console.log("Applicant created successfully:", result.data);
+                    form.reset();
+                    // Reset file states
+                    setDocument(undefined);
+                    setPhoto(undefined);
+                    setSignature(undefined);
+                } else {
+                    console.error("Error creating applicant:", result.error);
+                }
+            } catch (error) {
+                console.error("Unexpected error:", error);
+            }
         });
     };
 
     return (
         <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={(e) => {
+                e.preventDefault();
+                form.handleSubmit(onSubmit)(e);
+            }}
             className="rounded-lg border border-accent p-6 shadow-md bg-white/50 dark:bg-accent/20"
         >
             <FieldGroup>
@@ -160,7 +210,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                                         <SelectValue placeholder="Applicant" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Applicant">Applicant</SelectItem>
+                                        <SelectItem value="APPLICANT">Applicant</SelectItem>
                                         <SelectItem value="OTHER">Other</SelectItem>
                                     </SelectContent>
                                 </Select>
@@ -181,7 +231,16 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                             <Field>
                                 <FieldLabel>Applicant Address</FieldLabel>
 
-                                <Textarea className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="New Delhi" />
+                                <Textarea
+                                    className="border border-neutral-400/50 dark:border-accent"
+                                    {...field}
+                                    placeholder="New Delhi"
+                                    onBlur={(e) => {
+                                        field.onBlur();
+                                        // Prevent auto-focus after validation
+                                        e.currentTarget.blur();
+                                    }}
+                                />
                                 <FieldDescription>
                                     Enter Applicant Address
                                 </FieldDescription>
@@ -197,7 +256,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                 <div className="grid grid-cols-3 gap-4">
 
                     <Controller
-                        control={form.control ?? ""}
+                        control={form.control}
                         name="applicant.document"
                         render={({ field }) => (
                             <Field>
@@ -221,7 +280,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
 
 
                     <Controller
-                        control={form.control ?? ""}
+                        control={form.control}
                         name="applicant.photo"
                         render={({ field }) => (
                             <Field>
@@ -240,13 +299,12 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
 
                                     <DropzoneContent />
                                 </Dropzone>
-
                             </Field>
                         )}
                     />
 
                     <Controller
-                        control={form.control ?? ""}
+                        control={form.control}
                         name="applicant.signature"
                         render={({ field }) => (
                             <Field>
@@ -273,8 +331,8 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
 
                 <FieldSeparator />
 
-                <Button type="submit" className="mt-4 w-fit">
-                    Save Applicant
+                <Button type="submit" className="mt-4 w-fit" disabled={isPending}>
+                    {isPending ? "Saving..." : "Save Applicant"}
                 </Button>
             </FieldGroup>
 
