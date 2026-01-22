@@ -1,10 +1,11 @@
-
 "use server";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 const BASE_URL = "https://e-report-t9xh.onrender.com";
+// const BASE_URL = "localhost:8099";
+
 
 async function refreshAccessToken() {
   try {
@@ -29,12 +30,12 @@ async function refreshAccessToken() {
 
     return data.accessToken;
   } catch (error) {
-    // Clear cookies and redirect to login
     (await cookies()).delete("accessToken");
     redirect("/login");
   }
 }
 
+// JSON fetch
 export async function serverFetch<T>(
   endpoint: string,
   options: {
@@ -64,7 +65,6 @@ export async function serverFetch<T>(
       accessToken = await refreshAccessToken();
       res = await makeRequest(accessToken);
     } catch (error) {
-      // refreshAccessToken will redirect to login
       throw error;
     }
   }
@@ -75,4 +75,65 @@ export async function serverFetch<T>(
   }
 
   return res.json();
+}
+
+// Multipart fetch (for file uploads)
+export async function serverFetchMultipart<T>(
+  endpoint: string,
+  formData: FormData
+): Promise<T> {
+  const cookieStore = await cookies();
+  let accessToken = cookieStore.get("accessToken")?.value;
+
+  // Debug: Log what we're sending
+  console.log("=== serverFetchMultipart Debug ===");
+  console.log("Endpoint:", endpoint);
+  console.log("FormData contents:");
+  for (const [key, value] of formData.entries()) {
+    if (value instanceof File) {
+      console.log(`  ${key}:`, {
+        name: value.name,
+        size: value.size,
+        type: value.type,
+      });
+    } else {
+      console.log(`  ${key}:`, value);
+    }
+  }
+
+  const makeRequest = (token?: string) =>
+    fetch(`${BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        // Don't set Content-Type - browser will set it with boundary
+      },
+      body: formData,
+      cache: "no-store",
+      credentials: "include",
+    });
+
+  let res = await makeRequest(accessToken);
+
+  console.log("Response status:", res.status);
+  
+  if (res.status === 401) {
+    try {
+      accessToken = await refreshAccessToken();
+      res = await makeRequest(accessToken);
+      console.log("Response status after refresh:", res.status);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    console.error("API Error:", errorData);
+    throw new Error(errorData.message || "API request failed");
+  }
+
+  const responseData = await res.json();
+  console.log("Response data:", responseData);
+  return responseData;
 }

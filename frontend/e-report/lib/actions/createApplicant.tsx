@@ -1,109 +1,72 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { serverFetchMultipart } from "@/lib/api/server-api"; // Adjust path
 
-const BASE_URL = "https://e-report-t9xh.onrender.com";
-
-async function refreshAccessToken() {
+export async function createApplicant(formData: FormData) {
     try {
-        const res = await fetch(`${BASE_URL}/refresh/token`, {
-            method: "POST",
-            credentials: "include",
-            cache: "no-store",
-        });
+        // Extract data from FormData
+        const caseId = formData.get("caseId") as string;
+        const name = formData.get("name") as string;
+        const role = formData.get("role") as string;
+        const age = formData.get("age") as string;
+        const gender = formData.get("gender") as string;
+        const mobile = formData.get("mobile") as string;
+        const address = formData.get("address") as string;
+        const photo = formData.get("photo") as File;
+        const signature = formData.get("signature") as File;
+        const document = formData.get("document") as File;
 
-        if (!res.ok) {
-            throw new Error("Refresh token expired");
-        }
+        console.log("=== Server Action Debug ===");
+        console.log("Received files:");
+        console.log("Photo:", photo?.name, photo?.size, photo?.type);
+        console.log("Signature:", signature?.name, signature?.size, signature?.type);
+        console.log("Document:", document?.name, document?.size, document?.type);
 
-        const data = await res.json();
-
-        (await cookies()).set("accessToken", data.accessToken, {
-            httpOnly: true,
-            sameSite: "lax",
-            path: "/",
-            secure: process.env.NODE_ENV === "production",
-        });
-
-        return data.accessToken;
-    } catch (error) {
-        (await cookies()).delete("accessToken");
-        redirect("/login");
-    }
-}
-
-async function serverFetchMultipart(
-    endpoint: string,
-    formData: FormData,
-    token?: string
-) {
-    const res = await fetch(`${BASE_URL}${endpoint}`, {
-        method: "POST",
-        headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: formData,
-        cache: "no-store",
-        credentials: "include",
-    });
-
-    if (res.status === 401) {
-        try {
-            const newToken = await refreshAccessToken();
-            return serverFetchMultipart(endpoint, formData, newToken);
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || "API request failed");
-    }
-
-    return res.json();
-}
-
-export async function createApplicant(data: {
-    caseId: string;
-    name: string;
-    age: string;
-    gender: string;
-    mobile: string;
-    address: string;
-    role: string;
-    photo: File;
-    signature: File;
-    document: File;
-}) {
-    try {
-        const cookieStore = await cookies();
-        let accessToken = cookieStore.get("accessToken")?.value;
-
+        // Map gender to API format
         const genderMap: Record<string, string> = {
             MALE: "M",
             FEMALE: "F",
             OTHER: "O",
         };
-        const apiGender = genderMap[data.gender] || data.gender;
+        const apiGender = genderMap[gender] || gender;
 
-        // Create FormData
-        const formData = new FormData();
-        formData.append("name", data.name);
-        formData.append("role", data.role);
-        formData.append("age", data.age);
-        formData.append("gender", apiGender);
-        formData.append("mobile", data.mobile);
-        formData.append("address", data.address);
-        formData.append("photo", data.photo);
-        formData.append("signature", data.signature);
-        formData.append("document", data.document);
+        // Create new FormData for API - recreate from scratch
+        const apiFormData = new FormData();
+        apiFormData.append("name", name);
+        apiFormData.append("role", role);
+        apiFormData.append("age", age);
+        apiFormData.append("gender", apiGender);
+        apiFormData.append("mobile", mobile);
+        apiFormData.append("address", address);
+
+        // Append files - ensure they're proper File/Blob objects
+        if (photo && photo.size > 0) {
+            apiFormData.append("photo", photo, photo.name);
+        }
+        if (signature && signature.size > 0) {
+            apiFormData.append("signature", signature, signature.name);
+        }
+        if (document && document.size > 0) {
+            apiFormData.append("document", document, document.name);
+        }
+
+        console.log("=== Sending to API ===");
+        console.log("FormData entries:");
+        for (const [key, value] of apiFormData.entries()) {
+            if (value instanceof File) {
+                console.log(`${key}:`, {
+                    name: value.name,
+                    size: value.size,
+                    type: value.type,
+                });
+            } else {
+                console.log(`${key}:`, value);
+            }
+        }
 
         const result = await serverFetchMultipart(
-            `/cases/${data.caseId}/persons`,
-            formData,
-            accessToken
+            `/cases/${caseId}/persons`,
+            apiFormData
         );
 
         return { success: true, data: result };

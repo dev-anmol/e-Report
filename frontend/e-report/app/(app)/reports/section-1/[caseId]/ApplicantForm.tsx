@@ -10,9 +10,7 @@ import {
     FieldDescription,
     FieldGroup,
     FieldLabel,
-    FieldLegend,
     FieldSeparator,
-    FieldSet,
 } from "@/components/ui/field";
 
 import {
@@ -27,80 +25,96 @@ import { useState, useTransition } from "react";
 import { UploadIcon } from "lucide-react";
 import { createApplicant } from "@/lib/actions/createApplicant";
 
+// Updated schema type without File fields
+type FormValues = Omit<SectionOneApplicantValues, 'applicant'> & {
+    applicant: Omit<SectionOneApplicantValues['applicant'], 'photo' | 'signature' | 'document'>;
+};
+
 export default function ApplicantForm({ caseId }: { caseId: string }) {
-    const [document, setDocument] = useState<File[] | undefined>();
-    const [photo, setPhoto] = useState<File[] | undefined>();
-    const [signature, setSignature] = useState<File[] | undefined>();
+    // File states - kept separate from form
+    const [document, setDocument] = useState<File | null>(null);
+    const [photo, setPhoto] = useState<File | null>(null);
+    const [signature, setSignature] = useState<File | null>(null);
     const [isPending, startTransition] = useTransition();
 
     const handleDocument = (files: File[]) => {
-        setDocument(files);
         if (files.length > 0) {
-            form.setValue("applicant.document", files[0], { shouldValidate: true });
+            setDocument(files[0]);
         }
     };
 
     const handlePhoto = (files: File[]) => {
-        setPhoto(files);
         if (files.length > 0) {
-            form.setValue("applicant.photo", files[0], { shouldValidate: true });
+            setPhoto(files[0]);
         }
-    }
+    };
 
     const handleSignature = (files: File[]) => {
-        setSignature(files);
         if (files.length > 0) {
-            form.setValue("applicant.signature", files[0], { shouldValidate: true });
+            setSignature(files[0]);
         }
-    }
+    };
 
-    const form = useForm<SectionOneApplicantValues>({
-        resolver: zodResolver(sectionOneApplicantSchema),
+    const form = useForm<FormValues>({
+        resolver: zodResolver(sectionOneApplicantSchema.omit({
+            applicant: true
+        }).extend({
+            applicant: sectionOneApplicantSchema.shape.applicant.omit({
+                photo: true,
+                signature: true,
+                document: true
+            })
+        })),
         defaultValues: {
             caseId,
-            applicant: createEmptyApplicant(),
+            applicant: {
+                Name: "",
+                age: "",
+                gender: "MALE",
+                mobile: "",
+                address: "",
+                role: "APPLICANT",
+            },
         },
     });
 
-    const onSubmit = async (values: SectionOneApplicantValues) => {
-        // Prevent default focus behavior
-        // const formElement = document.activeElement as HTMLElement;
-        // if (formElement) {
-        //     formElement.blur();
-        // }
-
+    const onSubmit = async (values: FormValues) => {
         startTransition(async () => {
             try {
-                // Get files from state or form values
-                const photoFile = photo?.[0] || values.applicant.photo;
-                const signatureFile = signature?.[0] || values.applicant.signature;
-                const documentFile = document?.[0] || values.applicant.document;
-
-                if (!photoFile || !signatureFile || !documentFile) {
+                // Validate files exist
+                if (!photo || !signature || !document) {
                     console.error("All files are required");
                     return;
                 }
 
-                const result = await createApplicant({
-                    caseId: values.caseId,
-                    name: values.applicant.Name,
-                    age: values.applicant.age,
-                    gender: values.applicant.gender,
-                    mobile: values.applicant.mobile,
-                    address: values.applicant.address,
-                    role: values.applicant.role,
-                    photo: photoFile,
-                    signature: signatureFile,
-                    document: documentFile,
+                console.log("Submitting with files:", {
+                    photo: photo.name,
+                    signature: signature.name,
+                    document: document.name
                 });
+
+                // Create FormData to send to server action
+                const formData = new FormData();
+                formData.append("caseId", values.caseId);
+                formData.append("name", values.applicant.Name);
+                formData.append("age", values.applicant.age);
+                formData.append("gender", values.applicant.gender);
+                formData.append("mobile", values.applicant.mobile);
+                formData.append("address", values.applicant.address);
+                formData.append("role", values.applicant.role);
+                formData.append("photo", photo);
+                formData.append("signature", signature);
+                formData.append("document", document);
+
+                const result = await createApplicant(formData);
 
                 if (result.success) {
                     console.log("Applicant created successfully:", result.data);
                     form.reset();
                     // Reset file states
-                    setDocument(undefined);
-                    setPhoto(undefined);
-                    setSignature(undefined);
+                    setDocument(null);
+                    setPhoto(null);
+                    setSignature(null);
                 } else {
                     console.error("Error creating applicant:", result.error);
                 }
@@ -112,10 +126,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
 
     return (
         <form
-            onSubmit={(e) => {
-                e.preventDefault();
-                form.handleSubmit(onSubmit)(e);
-            }}
+            onSubmit={form.handleSubmit(onSubmit)}
             className="rounded-lg border border-accent p-6 shadow-md bg-white/50 dark:bg-accent/20"
         >
             <FieldGroup>
@@ -148,7 +159,6 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                             </Field>
                         )}
                     />
-
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 items-start">
@@ -159,16 +169,16 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                             <Field>
                                 <FieldLabel>Applicant Gender</FieldLabel>
                                 <Select
-                                    value={field.value ?? ""}
+                                    value={field.value}
                                     onValueChange={field.onChange}
                                 >
                                     <SelectTrigger className="border border-neutral-400/50 dark:border-accent">
                                         <SelectValue placeholder="Male" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="MALE">Male</SelectItem>
-                                        <SelectItem value="FEMALE">Female</SelectItem>
-                                        <SelectItem value="OTHER">Other</SelectItem>
+                                        <SelectItem key="MALE" value="MALE">Male</SelectItem>
+                                        <SelectItem key="FEMALE" value="FEMALE">Female</SelectItem>
+                                        <SelectItem key="OTHER" value="OTHER">Other</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FieldDescription>
@@ -191,11 +201,9 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                             </Field>
                         )}
                     />
-
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
-
                     <Controller
                         control={form.control}
                         name="applicant.role"
@@ -203,15 +211,15 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                             <Field>
                                 <FieldLabel>Applicant Role</FieldLabel>
                                 <Select
-                                    value={field.value ?? ""}
+                                    value={field.value}
                                     onValueChange={field.onChange}
                                 >
                                     <SelectTrigger className="border border-neutral-400/50 dark:border-accent">
                                         <SelectValue placeholder="Applicant" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="APPLICANT">Applicant</SelectItem>
-                                        <SelectItem value="OTHER">Other</SelectItem>
+                                        <SelectItem key="APPLICANT" value="APPLICANT">Applicant</SelectItem>
+                                        <SelectItem key="OTHER" value="OTHER">Other</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FieldDescription>
@@ -223,23 +231,16 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
 
                     <FieldSeparator />
 
-
                     <Controller
                         control={form.control}
                         name="applicant.address"
                         render={({ field }) => (
                             <Field>
                                 <FieldLabel>Applicant Address</FieldLabel>
-
                                 <Textarea
                                     className="border border-neutral-400/50 dark:border-accent"
                                     {...field}
                                     placeholder="New Delhi"
-                                    onBlur={(e) => {
-                                        field.onBlur();
-                                        // Prevent auto-focus after validation
-                                        e.currentTarget.blur();
-                                    }}
                                 />
                                 <FieldDescription>
                                     Enter Applicant Address
@@ -247,86 +248,70 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                             </Field>
                         )}
                     />
-
                 </div>
 
                 <FieldSeparator />
 
-
                 <div className="grid grid-cols-3 gap-4">
+                    <Field>
+                        <Dropzone
+                            maxFiles={1}
+                            onDrop={handleDocument}
+                            src={document ? [document] : undefined}
+                            className="border border-neutral-400/50 dark:border-accent"
+                        >
+                            <DropzoneEmptyState>
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                                        <UploadIcon size={16} />
+                                    </div>
+                                    <p className="font-medium text-sm">Upload Document</p>
+                                    <p className="text-xs text-muted-foreground">PDF only</p>
+                                </div>
+                            </DropzoneEmptyState>
+                            <DropzoneContent />
+                        </Dropzone>
+                    </Field>
 
-                    <Controller
-                        control={form.control}
-                        name="applicant.document"
-                        render={({ field }) => (
-                            <Field>
-                                <Dropzone maxFiles={1} onDrop={handleDocument} src={document} className="border border-neutral-400/50 dark:border-accent">
-                                    <DropzoneEmptyState>
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                                                <UploadIcon size={16} />
-                                            </div>
-                                            <p className="font-medium text-sm">Upload Applicant Document</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                PDF only
-                                            </p>
-                                        </div>
-                                    </DropzoneEmptyState>
-                                    <DropzoneContent />
-                                </Dropzone>
-                            </Field>
-                        )}
-                    />
+                    <Field>
+                        <Dropzone
+                            maxFiles={1}
+                            onDrop={handlePhoto}
+                            src={photo ? [photo] : undefined}
+                            className="border border-neutral-400/50 dark:border-accent"
+                        >
+                            <DropzoneEmptyState>
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                                        <UploadIcon size={16} />
+                                    </div>
+                                    <p className="font-medium truncate text-sm">Upload Photo</p>
+                                    <p className="text-xs text-muted-foreground">JPG / PNG only</p>
+                                </div>
+                            </DropzoneEmptyState>
+                            <DropzoneContent />
+                        </Dropzone>
+                    </Field>
 
-
-                    <Controller
-                        control={form.control}
-                        name="applicant.photo"
-                        render={({ field }) => (
-                            <Field>
-                                <Dropzone maxFiles={1} onDrop={handlePhoto} src={photo} className="border border-neutral-400/50 dark:border-accent">
-                                    <DropzoneEmptyState>
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                                                <UploadIcon size={16} />
-                                            </div>
-                                            <p className="font-medium truncate text-sm">Upload Applicant Photo</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                JPG / PNG only
-                                            </p>
-                                        </div>
-                                    </DropzoneEmptyState>
-
-                                    <DropzoneContent />
-                                </Dropzone>
-                            </Field>
-                        )}
-                    />
-
-                    <Controller
-                        control={form.control}
-                        name="applicant.signature"
-                        render={({ field }) => (
-                            <Field>
-                                <Dropzone maxFiles={1} onDrop={handleSignature} src={signature} className="border border-neutral-400/50 dark:border-accent">
-                                    <DropzoneEmptyState>
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                                                <UploadIcon size={16} />
-                                            </div>
-                                            <p className="font-medium truncate text-sm">Upload Applicant Signature</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                JPG / PNG only
-                                            </p>
-                                        </div>
-                                    </DropzoneEmptyState>
-
-                                    <DropzoneContent />
-                                </Dropzone>
-                            </Field>
-                        )}
-                    />
-
+                    <Field>
+                        <Dropzone
+                            maxFiles={1}
+                            onDrop={handleSignature}
+                            src={signature ? [signature] : undefined}
+                            className="border border-neutral-400/50 dark:border-accent"
+                        >
+                            <DropzoneEmptyState>
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                                        <UploadIcon size={16} />
+                                    </div>
+                                    <p className="font-medium truncate text-sm">Upload Signature</p>
+                                    <p className="text-xs text-muted-foreground">JPG / PNG only</p>
+                                </div>
+                            </DropzoneEmptyState>
+                            <DropzoneContent />
+                        </Dropzone>
+                    </Field>
                 </div>
 
                 <FieldSeparator />
@@ -335,7 +320,6 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                     {isPending ? "Saving..." : "Save Applicant"}
                 </Button>
             </FieldGroup>
-
         </form>
     );
 }
