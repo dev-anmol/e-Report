@@ -5,7 +5,11 @@ async function createCase(req, res, next) {
     const {
       branchCaseNumber,
       policeStationCaseNumber,
+<<<<<<< HEAD
+      section,
+=======
       sections,
+>>>>>>> origin/staging
       policeStationId,
       language
     } = req.body
@@ -17,7 +21,11 @@ async function createCase(req, res, next) {
     if (
       !branchCaseNumber ||
       !policeStationCaseNumber ||
+<<<<<<< HEAD
+      !section ||
+=======
       !sections ||
+>>>>>>> origin/staging
       !policeStationId
     ) {
       return res.status(400).json({
@@ -28,7 +36,11 @@ async function createCase(req, res, next) {
     const newCase = await Case.create({
       branchCaseNumber,
       policeStationCaseNumber,
+<<<<<<< HEAD
+      section,
+=======
       sections,
+>>>>>>> origin/staging
       policeStationId,
       officerId,
       language
@@ -43,6 +55,10 @@ async function createCase(req, res, next) {
   }
 }
 
+<<<<<<< HEAD
+module.exports = {
+  createCase
+=======
 async function getMyCases(req, res, next) {
   try {
     const cases = await Case.find({
@@ -86,4 +102,5 @@ module.exports = {
   createCase,
   getMyCases,
   getCaseById
+>>>>>>> origin/staging
 }
