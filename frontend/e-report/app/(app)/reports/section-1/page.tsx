@@ -9,6 +9,8 @@ import Link from "next/link"
 export default function Section() {
 
     const [formName, setFormName] = useState<string>("Case Form")
+    const [searchQuery, setSearchQuery] = useState<string>("")
+    
     return <section className="flex flex-col space-y-14 p-6 rounded-lg border border-accent bg-white/50 dark:bg-accent/20">
 
         <div className="flex flex-col space-y-8">
@@ -17,7 +19,12 @@ export default function Section() {
             </div>
 
             <div className="flex flex-row items-center gap-6 justify-between px-8">
-                <Input placeholder="search reports" className="w-[300px] border-neutral-400/80 dark:border-neutral-50/10" />
+                <Input 
+                    placeholder="search reports" 
+                    className="w-[300px] border-neutral-400/80 dark:border-neutral-50/10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
                 <Button asChild>
                     <Link href='/reports/section-1/new'>
                         New
@@ -28,7 +35,7 @@ export default function Section() {
 
 
         <div className="px-8">
-            <AppTable></AppTable>
+            <AppTable searchQuery={searchQuery} />
         </div>
     </section>
 }

@@ -76,7 +76,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = 8082;
+const PORT = 8099;
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

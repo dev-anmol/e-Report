@@ -32,6 +32,8 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
     const [document, setDocument] = useState<File[] | undefined>();
     const [photo, setPhoto] = useState<File[] | undefined>();
     const [signature, setSignature] = useState<File[] | undefined>();
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
 
     const handleDocument = (files: File[]) => {
@@ -55,12 +57,32 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
     });
 
     const onSubmit = async (values: SectionOneApplicantValues) => {
-        console.log(values);
+        setLoading(true);
+        setMessage(null);
 
-        await fetch(`/api/cases/${caseId}/applicant`, {
-            method: "POST",
-            body: JSON.stringify(values),
-        });
+        try {
+            const response = await fetch(`/api/cases/${caseId}/applicant`, {
+                method: "POST",
+                body: JSON.stringify(values),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                setMessage({ type: "success", text: "Applicant saved successfully!" });
+                form.reset();
+                setDocument(undefined);
+                setPhoto(undefined);
+                setSignature(undefined);
+            } else {
+                setMessage({ type: "error", text: result.error || "Failed to save applicant" });
+            }
+        } catch (error) {
+            setMessage({ type: "error", text: "An error occurred while saving" });
+            console.error("Error:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -273,8 +295,19 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
 
                 <FieldSeparator />
 
-                <Button type="submit" className="mt-4 w-fit">
-                    Save Applicant
+                {/* Success/Error Message */}
+                {message && (
+                    <div className={`p-3 rounded-lg ${
+                        message.type === "success" 
+                            ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100" 
+                            : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100"
+                    }`}>
+                        {message.text}
+                    </div>
+                )}
+
+                <Button type="submit" className="mt-4 w-fit" disabled={loading}>
+                    {loading ? "Saving..." : "Save Applicant"}
                 </Button>
             </FieldGroup>
 
