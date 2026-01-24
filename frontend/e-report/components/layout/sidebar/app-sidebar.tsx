@@ -2,17 +2,22 @@
 
 import {
   Bot,
+  Plus,
   Settings2,
   SquareTerminal
 } from "lucide-react"
 import * as React from "react"
+import Link from "next/link"
 
 import { NavMain } from "@/components/layout/sidebar/nav-main"
 import { NavUser } from "@/components/layout/sidebar/nav-user"
+import { Button } from "@/components/ui/button"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
@@ -39,7 +44,7 @@ const data = {
       hasChilds: true,
       items: [
         {
-          title: "Roznama Form",
+          title: "Case Form",
           url: `/reports/section-1`,
         },
         {
@@ -77,6 +82,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
+        
+        {/* New Case Quick Action */}
+        <SidebarGroup className="px-2 py-2">
+          <SidebarGroupContent>
+            <Link href="/cases/new" className="w-full">
+              <Button className="w-full" size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                New Case
+              </Button>
+            </Link>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

@@ -10,9 +10,7 @@ import {
     FieldDescription,
     FieldGroup,
     FieldLabel,
-    FieldLegend,
     FieldSeparator,
-    FieldSet,
 } from "@/components/ui/field";
 
 import {
@@ -23,16 +21,50 @@ import {
 import { createEmptyApplicant } from "@/utils/emptyApplicant";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/ui/shadcn-io/dropzone';
-import { useState } from "react";
-import { UploadIcon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { UploadIcon, CheckCircle, Edit } from "lucide-react";
 
-
+// Interface for the person data from API
+interface PersonData {
+    _id: string;
+    name: string;
+    role: string;
+    age?: number;
+    gender?: string;
+    mobile?: string;
+    address?: string;
+    files?: {
+        photo?: string;
+        signature?: string;
+        document?: string;
+    };
+    createdAt: string;
+}
 
 export default function ApplicantForm({ caseId }: { caseId: string }) {
     const [document, setDocument] = useState<File[] | undefined>();
     const [photo, setPhoto] = useState<File[] | undefined>();
     const [signature, setSignature] = useState<File[] | undefined>();
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+    const [existingApplicant, setExistingApplicant] = useState<PersonData | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
 
+    // Fetch existing applicant on mount
+    useEffect(() => {
+        const fetchApplicant = async () => {
+            try {
+                const response = await fetch(`/api/cases/${caseId}/applicant`);
+                const result = await response.json();
+                if (result.success && result.data && result.data.length > 0) {
+                    setExistingApplicant(result.data[0]);
+                }
+            } catch (error) {
+                console.error("Error fetching applicant:", error);
+            }
+        };
+        fetchApplicant();
+    }, [caseId]);
 
     const handleDocument = (files: File[]) => {
         setDocument(files);
@@ -55,13 +87,127 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
     });
 
     const onSubmit = async (values: SectionOneApplicantValues) => {
-        console.log(values);
+        setLoading(true);
+        setMessage(null);
 
-        await fetch(`/api/cases/${caseId}/applicant`, {
-            method: "POST",
-            body: JSON.stringify(values),
-        });
+        try {
+            const response = await fetch(`/api/cases/${caseId}/applicant`, {
+                method: "POST",
+                body: JSON.stringify(values),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                setMessage({ type: "success", text: "Applicant saved successfully!" });
+                // Fetch the created applicant
+                const fetchResponse = await fetch(`/api/cases/${caseId}/applicant`);
+                const fetchResult = await fetchResponse.json();
+                if (fetchResult.success && fetchResult.data && fetchResult.data.length > 0) {
+                    setExistingApplicant(fetchResult.data[0]);
+                    setIsEditing(false);
+                }
+            } else {
+                setMessage({ type: "error", text: result.error || "Failed to save applicant" });
+            }
+        } catch (error) {
+            setMessage({ type: "error", text: "An error occurred while saving" });
+            console.error("Error:", error);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    // If applicant exists and not editing, show read-only view
+    if (existingApplicant && !isEditing) {
+        return (
+            <div className="rounded-lg border border-blue-300 p-6 shadow-md bg-blue-50/50 dark:bg-blue-950/30">
+                <FieldGroup>
+                    <div className="flex items-center justify-between mb-4">
+                        <p className="font-normal text-2xl text-blue-700 dark:text-blue-300">Applicant Details</p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsEditing(true)}
+                        >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                        </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field>
+                            <FieldLabel>Applicant Name</FieldLabel>
+                            <Input value={existingApplicant.name} disabled className="bg-white" />
+                        </Field>
+                        <Field>
+                            <FieldLabel>Applicant Age</FieldLabel>
+                            <Input value={existingApplicant.age || ""} disabled className="bg-white" />
+                        </Field>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 items-start">
+                        <Field>
+                            <FieldLabel>Applicant Gender</FieldLabel>
+                            <Input value={existingApplicant.gender || ""} disabled className="bg-white" />
+                        </Field>
+                        <Field>
+                            <FieldLabel>Applicant Phone Number</FieldLabel>
+                            <Input value={existingApplicant.mobile || ""} disabled className="bg-white" />
+                        </Field>
+                    </div>
+
+                    <Field>
+                        <FieldLabel>Applicant Address</FieldLabel>
+                        <Textarea value={existingApplicant.address || ""} disabled className="bg-white" />
+                    </Field>
+
+                    {existingApplicant.files && (existingApplicant.files.photo || existingApplicant.files.signature || existingApplicant.files.document) && (
+                        <>
+                            <FieldSeparator />
+                            <div className="grid grid-cols-3 gap-4">
+                                {existingApplicant.files.document && (
+                                    <Field>
+                                        <FieldLabel>Document</FieldLabel>
+                                        <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg flex items-center gap-2">
+                                            <CheckCircle className="w-4 h-4 text-green-600" />
+                                            <span className="text-sm text-green-700 dark:text-green-300">Document Uploaded</span>
+                                        </div>
+                                    </Field>
+                                )}
+                                {existingApplicant.files.photo && (
+                                    <Field>
+                                        <FieldLabel>Photo</FieldLabel>
+                                        <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg flex items-center gap-2">
+                                            <CheckCircle className="w-4 h-4 text-green-600" />
+                                            <span className="text-sm text-green-700 dark:text-green-300">Photo Uploaded</span>
+                                        </div>
+                                    </Field>
+                                )}
+                                {existingApplicant.files.signature && (
+                                    <Field>
+                                        <FieldLabel>Signature</FieldLabel>
+                                        <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg flex items-center gap-2">
+                                            <CheckCircle className="w-4 h-4 text-green-600" />
+                                            <span className="text-sm text-green-700 dark:text-green-300">Signature Uploaded</span>
+                                        </div>
+                                    </Field>
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    <div className="mt-4 p-3 bg-green-100 dark:bg-green-900 rounded-lg flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="text-green-700 dark:text-green-100 font-medium">
+                            Submitted on {new Date(existingApplicant.createdAt).toLocaleDateString()}
+                        </span>
+                    </div>
+                </FieldGroup>
+            </div>
+        );
+    }
 
     return (
         <form
@@ -73,7 +219,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                 <div className="grid grid-cols-2 gap-4">
                     <Controller
                         control={form.control}
-                        name="applicant.Name"
+                        name="applicant.name"
                         render={({ field }) => (
                             <Field>
                                 <FieldLabel>Applicant Name</FieldLabel>
@@ -273,11 +419,23 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
 
                 <FieldSeparator />
 
-                <Button type="submit" className="mt-4 w-fit">
-                    Save Applicant
+                {/* Success/Error Message */}
+                {message && (
+                    <div className={`p-3 rounded-lg ${
+                        message.type === "success" 
+                            ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100" 
+                            : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100"
+                    }`}>
+                        {message.text}
+                    </div>
+                )}
+
+                <Button type="submit" className="mt-4 w-fit" disabled={loading}>
+                    {loading ? "Saving..." : "Save Applicant"}
                 </Button>
             </FieldGroup>
 
         </form>
     );
 }
+

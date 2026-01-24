@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import {
     Field,
     FieldDescription,
@@ -31,11 +32,15 @@ type FormValues = Omit<SectionOneApplicantValues, 'applicant'> & {
 };
 
 export default function ApplicantForm({ caseId }: { caseId: string }) {
+    const router = useRouter();
     // File states - kept separate from form
     const [document, setDocument] = useState<File | null>(null);
     const [photo, setPhoto] = useState<File | null>(null);
     const [signature, setSignature] = useState<File | null>(null);
     const [isPending, startTransition] = useTransition();
+    const [isSubmitted, setIsSubmitted] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
 
     const handleDocument = (files: File[]) => {
         if (files.length > 0) {
@@ -68,7 +73,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
         defaultValues: {
             caseId,
             applicant: {
-                Name: "",
+                name: "",
                 age: "",
                 gender: "MALE",
                 mobile: "",
@@ -79,46 +84,52 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
     });
 
     const onSubmit = async (values: FormValues) => {
+        setFormError(null);
         startTransition(async () => {
             try {
-                // Validate files exist
-                if (!photo || !signature || !document) {
-                    console.error("All files are required");
+                // Validate at least name is provided
+                if (!values.applicant.name.trim()) {
+                    setFormError("Applicant name is required");
                     return;
                 }
 
-                console.log("Submitting with files:", {
-                    photo: photo.name,
-                    signature: signature.name,
-                    document: document.name
+                console.log("Submitting applicant:", {
+                    name: values.applicant.name,
+                    files: {
+                        photo: photo?.name,
+                        signature: signature?.name,
+                        document: document?.name
+                    }
                 });
 
                 // Create FormData to send to server action
                 const formData = new FormData();
                 formData.append("caseId", values.caseId);
-                formData.append("name", values.applicant.Name);
+                formData.append("name", values.applicant.name);
                 formData.append("age", values.applicant.age);
                 formData.append("gender", values.applicant.gender);
                 formData.append("mobile", values.applicant.mobile);
                 formData.append("address", values.applicant.address);
                 formData.append("role", values.applicant.role);
-                formData.append("photo", photo);
-                formData.append("signature", signature);
-                formData.append("document", document);
+                
+                // Add files if they exist (optional)
+                if (photo) formData.append("photo", photo);
+                if (signature) formData.append("signature", signature);
+                if (document) formData.append("document", document);
 
                 const result = await createApplicant(formData);
 
                 if (result.success) {
                     console.log("Applicant created successfully:", result.data);
-                    form.reset();
-                    // Reset file states
-                    setDocument(null);
-                    setPhoto(null);
-                    setSignature(null);
+                    setIsSubmitted(true);
+                    setSuccessMessage(`Applicant "${values.applicant.name}" saved successfully!`);
                 } else {
+                    setFormError(result.error || "Failed to save applicant");
                     console.error("Error creating applicant:", result.error);
                 }
             } catch (error) {
+                const errorMsg = error instanceof Error ? error.message : "An unexpected error occurred";
+                setFormError(errorMsg);
                 console.error("Unexpected error:", error);
             }
         });
@@ -129,16 +140,33 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
             onSubmit={form.handleSubmit(onSubmit)}
             className="rounded-lg border border-accent p-6 shadow-md bg-white/50 dark:bg-accent/20"
         >
+            {successMessage && (
+                <div className="mb-4 p-3 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 rounded flex items-center gap-2">
+                    <span className="text-xl">✓</span>
+                    <span>{successMessage}</span>
+                </div>
+            )}
+            {formError && (
+                <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 rounded flex items-center gap-2">
+                    <span className="text-xl">✕</span>
+                    <span>{formError}</span>
+                </div>
+            )}
             <FieldGroup>
                 <p className="font-normal text-2xl mb-4">Applicant Details</p>
                 <div className="grid grid-cols-2 gap-4">
                     <Controller
                         control={form.control}
-                        name="applicant.Name"
+                        name="applicant.name"
                         render={({ field }) => (
                             <Field>
                                 <FieldLabel>Applicant Name</FieldLabel>
-                                <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="John" />
+                                <Input 
+                                    disabled={isSubmitted}
+                                    className="border border-neutral-400/50 dark:border-accent" 
+                                    {...field} 
+                                    placeholder="John" 
+                                />
                                 <FieldDescription>
                                     Enter Applicant's Name
                                 </FieldDescription>
@@ -152,7 +180,12 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                         render={({ field }) => (
                             <Field>
                                 <FieldLabel>Applicant Age</FieldLabel>
-                                <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="25" />
+                                <Input 
+                                    disabled={isSubmitted}
+                                    className="border border-neutral-400/50 dark:border-accent" 
+                                    {...field} 
+                                    placeholder="25" 
+                                />
                                 <FieldDescription>
                                     Enter Applicant's Age
                                 </FieldDescription>
@@ -194,7 +227,12 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                         render={({ field }) => (
                             <Field>
                                 <FieldLabel>Applicant Phone Number</FieldLabel>
-                                <Input className="border border-neutral-400/50 dark:border-accent" {...field} placeholder="8888888888" />
+                                <Input 
+                                    disabled={isSubmitted}
+                                    className="border border-neutral-400/50 dark:border-accent" 
+                                    {...field} 
+                                    placeholder="8888888888" 
+                                />
                                 <FieldDescription>
                                     Enter Mobile Number
                                 </FieldDescription>
@@ -238,6 +276,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                             <Field>
                                 <FieldLabel>Applicant Address</FieldLabel>
                                 <Textarea
+                                    disabled={isSubmitted}
                                     className="border border-neutral-400/50 dark:border-accent"
                                     {...field}
                                     placeholder="New Delhi"
@@ -316,9 +355,24 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
 
                 <FieldSeparator />
 
-                <Button type="submit" className="mt-4 w-fit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Applicant"}
-                </Button>
+                <div className="flex gap-3">
+                    <Button 
+                        type="submit" 
+                        className="mt-4 w-fit" 
+                        disabled={isPending || isSubmitted}
+                    >
+                        {isPending ? "Saving..." : "Save Applicant"}
+                    </Button>
+                    
+                    <Button 
+                        type="button"
+                        variant="outline"
+                        className="mt-4 w-fit"
+                        onClick={() => router.push(`/reports/${caseId}`)}
+                    >
+                        Go to Forms →
+                    </Button>
+                </div>
             </FieldGroup>
         </form>
     );

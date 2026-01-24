@@ -13,8 +13,7 @@ router.post(
   createCase
 )
 
-router.post("/cases", createCase)
-router.get("/cases", getMyCases)
-router.get("/cases/:caseId", getCaseById)
+router.get("/cases", auth, getMyCases)
+router.get("/cases/:caseId", auth, getCaseById)
 
 module.exports = router
