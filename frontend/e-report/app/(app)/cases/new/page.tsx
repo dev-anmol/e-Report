@@ -133,7 +133,7 @@ export default function CreateCasePage() {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Back Button */}
       <Button
         variant="ghost"

@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCaseByIdAction, getPersonsByCaseAction, Case, Person } from "@/lib/actions/cases";
 import { getFormsByCaseAction } from "@/lib/actions/forms";
-import ApplicantForm from "../section-2/[caseId]/ApplicantForm";
-import DefendantsForm from "../section-2/[caseId]/DefendentForm";
+import ApplicantForm from "@/components/forms/ApplicantForm";
+import DefendantsForm from "@/components/forms/DefendantsForm";
+import WitnessesForm from "@/components/forms/WitnessesForm";
 
 // Mock data
 const MOCK_CASE: Case = {
@@ -94,22 +95,19 @@ function ExpandableSection({
 
   return (
     <div
-      className={`rounded-lg border-2 transition-all duration-300 overflow-hidden ${
-        isOpen ? style.open : style.closed
-      }`}
+      className={`rounded-lg border-2 transition-all duration-300 overflow-hidden ${isOpen ? style.open : style.closed
+        }`}
     >
       {/* Header - Always Visible */}
       <div
-        className={`flex items-center justify-between p-4 cursor-pointer transition-colors ${
-          !isOpen && "hover:bg-gray-100 dark:hover:bg-gray-800"
-        }`}
+        className={`flex items-center justify-between p-4 cursor-pointer transition-colors ${!isOpen && "hover:bg-gray-100 dark:hover:bg-gray-800"
+          }`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-3">
           <div
-            className={`flex items-center justify-center w-10 h-10 rounded-full ${
-              isOpen ? style.accent : style.icon
-            }`}
+            className={`flex items-center justify-center w-10 h-10 rounded-full ${isOpen ? style.accent : style.icon
+              }`}
           >
             <Icon size={20} className={isOpen ? "text-white" : ""} />
           </div>
@@ -136,9 +134,8 @@ function ExpandableSection({
 
       {/* Content - Only visible when open */}
       <div
-        className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
-        }`}
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+          }`}
       >
         <div className="p-4 pt-0">{children}</div>
       </div>
@@ -299,31 +296,7 @@ export default function CaseForm({ caseId }: CaseFormProps) {
           count={witnesses.length}
           variant="witness"
         >
-          <div className="space-y-4">
-            {witnesses.length > 0 ? (
-              <div className="space-y-2">
-                {witnesses.map((witness) => (
-                  <div
-                    key={witness._id}
-                    className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg flex justify-between items-center"
-                  >
-                    <div>
-                      <p className="font-medium">{witness.name}</p>
-                      <p className="text-sm text-gray-500">{witness._id}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-4">
-                No witnesses added yet
-              </p>
-            )}
-            <Button className="w-full" disabled>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Witness
-            </Button>
-          </div>
+          <WitnessesForm caseId={caseId} />
         </ExpandableSection>
 
         {/* Forms Section */}

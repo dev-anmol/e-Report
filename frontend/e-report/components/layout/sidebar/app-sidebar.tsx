@@ -1,17 +1,14 @@
 "use client"
 
 import {
-  Bot,
   Plus,
   Settings2,
   SquareTerminal
 } from "lucide-react"
 import * as React from "react"
-import Link from "next/link"
 
 import { NavMain } from "@/components/layout/sidebar/nav-main"
 import { NavUser } from "@/components/layout/sidebar/nav-user"
-import { Button } from "@/components/ui/button"
 import {
   Sidebar,
   SidebarContent,
@@ -38,32 +35,11 @@ const data = {
       hasChilds: false
     },
     {
-      title: "Reports",
-      url: "#",
-      icon: Bot,
-      hasChilds: true,
-      items: [
-        {
-          title: "Case Form",
-          url: `/reports/section-1`,
-        },
-        {
-          title: "Notice Form",
-          url: "/reports/section-2",
-        },
-        {
-          title: "Interim Form",
-          url: "/reports/section-3",
-        },
-        {
-          title: "Statement Form",
-          url: "/reports/section-4",
-        },
-        {
-          title: "BondTime Form",
-          url: "/reports/section-5",
-        },
-      ],
+      title: "New Case",
+      url: '/cases/new',
+      icon: Plus,
+      isActive: true,
+      hasChilds: false
     },
     {
       title: "Analyze",
@@ -82,16 +58,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        
         {/* New Case Quick Action */}
         <SidebarGroup className="px-2 py-2">
           <SidebarGroupContent>
-            <Link href="/cases/new" className="w-full">
-              <Button className="w-full" size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                New Case
-              </Button>
-            </Link>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

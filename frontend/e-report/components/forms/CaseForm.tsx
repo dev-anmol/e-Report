@@ -8,8 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getCaseByIdAction, getPersonsByCaseAction, Case, Person } from "@/lib/actions/cases";
 import { getFormsByCaseAction } from "@/lib/actions/forms";
 import { SectionCard } from "./SectionCard";
-import ApplicantForm from "@/app/(app)/reports/section-2/[caseId]/ApplicantForm";
-import DefendantsForm from "@/app/(app)/reports/section-2/[caseId]/DefendentForm";
+import ApplicantForm from "@/components/forms/ApplicantForm";
+import DefendantsForm from "@/components/forms/DefendantsForm";
 import FormsList from "./FormsList";
 
 // Mock data

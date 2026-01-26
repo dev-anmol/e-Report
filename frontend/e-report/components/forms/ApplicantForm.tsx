@@ -19,10 +19,9 @@ import {
     SectionOneApplicantValues,
 } from "@/types/section-1/sectionOneApplicantSchema";
 
-import { createEmptyApplicant } from "@/utils/emptyApplicant";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/ui/shadcn-io/dropzone';
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { UploadIcon } from "lucide-react";
 import { createApplicant } from "@/lib/actions/createApplicant";
 
@@ -42,21 +41,29 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [formError, setFormError] = useState<string | null>(null);
 
+
+    useEffect(() => {
+        console.log(`${caseId}`)
+    }, [])
+
     const handleDocument = (files: File[]) => {
         if (files.length > 0) {
             setDocument(files[0]);
+            console.log("Document selected:", files[0].name);
         }
     };
 
     const handlePhoto = (files: File[]) => {
         if (files.length > 0) {
             setPhoto(files[0]);
+            console.log("Photo selected:", files[0].name);
         }
     };
 
     const handleSignature = (files: File[]) => {
         if (files.length > 0) {
             setSignature(files[0]);
+            console.log("Signature selected:", files[0].name);
         }
     };
 
@@ -81,25 +88,32 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                 role: "APPLICANT",
             },
         },
+        mode: "onChange", // Enable validation on change
     });
 
     const onSubmit = async (values: FormValues) => {
+        console.log("=== FORM SUBMISSION STARTED ===");
+        console.log("Form values:", values);
+
         setFormError(null);
+        setSuccessMessage(null);
+
+        // Validate at least name is provided
+        if (!values.applicant.name.trim()) {
+            setFormError("Applicant name is required");
+            console.error("Validation failed: Name is required");
+            return;
+        }
+
+        console.log("Starting transition...");
+
         startTransition(async () => {
             try {
-                // Validate at least name is provided
-                if (!values.applicant.name.trim()) {
-                    setFormError("Applicant name is required");
-                    return;
-                }
-
-                console.log("Submitting applicant:", {
-                    name: values.applicant.name,
-                    files: {
-                        photo: photo?.name,
-                        signature: signature?.name,
-                        document: document?.name
-                    }
+                console.log("Inside transition - preparing FormData");
+                console.log("Files to upload:", {
+                    photo: photo?.name || "none",
+                    signature: signature?.name || "none",
+                    document: document?.name || "none"
                 });
 
                 // Create FormData to send to server action
@@ -111,33 +125,63 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                 formData.append("mobile", values.applicant.mobile);
                 formData.append("address", values.applicant.address);
                 formData.append("role", values.applicant.role);
-                
-                // Add files if they exist (optional)
-                if (photo) formData.append("photo", photo);
-                if (signature) formData.append("signature", signature);
-                if (document) formData.append("document", document);
 
+                // Add files if they exist (optional)
+                if (photo) {
+                    formData.append("photo", photo);
+                    console.log("Photo appended to FormData");
+                }
+                if (signature) {
+                    formData.append("signature", signature);
+                    console.log("Signature appended to FormData");
+                }
+                if (document) {
+                    formData.append("document", document);
+                    console.log("Document appended to FormData");
+                }
+
+                console.log("Calling createApplicant server action...");
                 const result = await createApplicant(formData);
+                console.log("Server action result:", result);
 
                 if (result.success) {
-                    console.log("Applicant created successfully:", result.data);
+                    console.log("✓ Applicant created successfully:", result.data);
                     setIsSubmitted(true);
                     setSuccessMessage(`Applicant "${values.applicant.name}" saved successfully!`);
+
+                    // Optional: Reset file states
+                    setPhoto(null);
+                    setSignature(null);
+                    setDocument(null);
                 } else {
-                    setFormError(result.error || "Failed to save applicant");
-                    console.error("Error creating applicant:", result.error);
+                    const errorMsg = result.error || "Failed to save applicant";
+                    setFormError(errorMsg);
+                    console.error("✗ Server action failed:", errorMsg);
                 }
             } catch (error) {
                 const errorMsg = error instanceof Error ? error.message : "An unexpected error occurred";
                 setFormError(errorMsg);
-                console.error("Unexpected error:", error);
+                console.error("✗ Unexpected error in transition:", error);
             }
         });
     };
 
+    // Add this to debug form state
+    console.log("Form state:", {
+        isValid: form.formState.isValid,
+        errors: form.formState.errors,
+        isPending,
+        isSubmitted
+    });
+
     return (
         <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={(e) => {
+                console.log("=== FORM onSubmit EVENT FIRED ===");
+                e.preventDefault();
+                console.log("Form validation errors:", form.formState.errors);
+                form.handleSubmit(onSubmit)(e);
+            }}
             className="rounded-lg border border-accent p-6 shadow-md bg-white/50 dark:bg-accent/20"
         >
             {successMessage && (
@@ -152,21 +196,37 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                     <span>{formError}</span>
                 </div>
             )}
+
+            {/* Display form validation errors */}
+            {Object.keys(form.formState.errors).length > 0 && (
+                <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-100 rounded">
+                    <p className="font-semibold">Please fix the following errors:</p>
+                    <ul className="list-disc list-inside mt-2">
+                        {Object.entries(form.formState.errors).map(([key, error]) => (
+                            <li key={key}>{error?.message?.toString() || `Error in ${key}`}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
             <FieldGroup>
                 <p className="font-normal text-2xl mb-4">Applicant Details</p>
                 <div className="grid grid-cols-2 gap-4">
                     <Controller
                         control={form.control}
                         name="applicant.name"
-                        render={({ field }) => (
+                        render={({ field, fieldState }) => (
                             <Field>
-                                <FieldLabel>Applicant Name</FieldLabel>
-                                <Input 
+                                <FieldLabel>Applicant Name *</FieldLabel>
+                                <Input
                                     disabled={isSubmitted}
-                                    className="border border-neutral-400/50 dark:border-accent" 
-                                    {...field} 
-                                    placeholder="John" 
+                                    className="border border-neutral-400/50 dark:border-accent"
+                                    {...field}
+                                    placeholder="John"
                                 />
+                                {fieldState.error && (
+                                    <p className="text-sm text-red-500">{fieldState.error.message}</p>
+                                )}
                                 <FieldDescription>
                                     Enter Applicant's Name
                                 </FieldDescription>
@@ -177,15 +237,18 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                     <Controller
                         control={form.control}
                         name="applicant.age"
-                        render={({ field }) => (
+                        render={({ field, fieldState }) => (
                             <Field>
                                 <FieldLabel>Applicant Age</FieldLabel>
-                                <Input 
+                                <Input
                                     disabled={isSubmitted}
-                                    className="border border-neutral-400/50 dark:border-accent" 
-                                    {...field} 
-                                    placeholder="25" 
+                                    className="border border-neutral-400/50 dark:border-accent"
+                                    {...field}
+                                    placeholder="25"
                                 />
+                                {fieldState.error && (
+                                    <p className="text-sm text-red-500">{fieldState.error.message}</p>
+                                )}
                                 <FieldDescription>
                                     Enter Applicant's Age
                                 </FieldDescription>
@@ -202,6 +265,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                             <Field>
                                 <FieldLabel>Applicant Gender</FieldLabel>
                                 <Select
+                                    disabled={isSubmitted}
                                     value={field.value}
                                     onValueChange={field.onChange}
                                 >
@@ -224,15 +288,18 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                     <Controller
                         control={form.control}
                         name="applicant.mobile"
-                        render={({ field }) => (
+                        render={({ field, fieldState }) => (
                             <Field>
                                 <FieldLabel>Applicant Phone Number</FieldLabel>
-                                <Input 
+                                <Input
                                     disabled={isSubmitted}
-                                    className="border border-neutral-400/50 dark:border-accent" 
-                                    {...field} 
-                                    placeholder="8888888888" 
+                                    className="border border-neutral-400/50 dark:border-accent"
+                                    {...field}
+                                    placeholder="8888888888"
                                 />
+                                {fieldState.error && (
+                                    <p className="text-sm text-red-500">{fieldState.error.message}</p>
+                                )}
                                 <FieldDescription>
                                     Enter Mobile Number
                                 </FieldDescription>
@@ -249,6 +316,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                             <Field>
                                 <FieldLabel>Applicant Role</FieldLabel>
                                 <Select
+                                    disabled={isSubmitted}
                                     value={field.value}
                                     onValueChange={field.onChange}
                                 >
@@ -272,7 +340,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                     <Controller
                         control={form.control}
                         name="applicant.address"
-                        render={({ field }) => (
+                        render={({ field, fieldState }) => (
                             <Field>
                                 <FieldLabel>Applicant Address</FieldLabel>
                                 <Textarea
@@ -281,6 +349,9 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                                     {...field}
                                     placeholder="New Delhi"
                                 />
+                                {fieldState.error && (
+                                    <p className="text-sm text-red-500">{fieldState.error.message}</p>
+                                )}
                                 <FieldDescription>
                                     Enter Applicant Address
                                 </FieldDescription>
@@ -294,6 +365,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                 <div className="grid md:grid-cols-3 gap-4 grid-cols-1 ">
                     <Field>
                         <Dropzone
+                            disabled={isSubmitted}
                             maxFiles={1}
                             onDrop={handleDocument}
                             src={document ? [document] : undefined}
@@ -314,6 +386,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
 
                     <Field>
                         <Dropzone
+                            disabled={isSubmitted}
                             maxFiles={1}
                             onDrop={handlePhoto}
                             src={photo ? [photo] : undefined}
@@ -334,6 +407,7 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
 
                     <Field>
                         <Dropzone
+                            disabled={isSubmitted}
                             maxFiles={1}
                             onDrop={handleSignature}
                             src={signature ? [signature] : undefined}
@@ -356,15 +430,16 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
                 <FieldSeparator />
 
                 <div className="flex gap-3">
-                    <Button 
-                        type="submit" 
-                        className="mt-4 w-fit" 
+                    <Button
+                        type="submit"
+                        className="mt-4 w-fit"
                         disabled={isPending || isSubmitted}
+                        onClick={() => console.log("Button clicked, isPending:", isPending, "isSubmitted:", isSubmitted)}
                     >
-                        {isPending ? "Saving..." : "Save Applicant"}
+                        {isPending ? "Saving..." : isSubmitted ? "Saved ✓" : "Save Applicant"}
                     </Button>
-                    
-                    <Button 
+
+                    <Button
                         type="button"
                         variant="outline"
                         className="mt-4 w-fit"
