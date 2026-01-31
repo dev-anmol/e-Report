@@ -15,16 +15,10 @@ const caseSchema = new mongoose.Schema(
       trim: true
     },
 
-<<<<<<< HEAD
     section: {
       type: String,
       required: true,
       trim: true
-=======
-    sections: {
-      type: [String],
-      required: true
->>>>>>> origin/staging
     },
 
     policeStationId: {
@@ -63,8 +57,4 @@ const caseSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-<<<<<<< HEAD
 module.exports = mongoose.model("case", caseSchema)
-=======
-module.exports = mongoose.model("Case", caseSchema)
->>>>>>> origin/staging
