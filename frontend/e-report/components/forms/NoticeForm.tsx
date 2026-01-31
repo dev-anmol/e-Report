@@ -29,7 +29,7 @@ interface Notice130FormProps {
   onSuccess?: (formId: string) => void;
 }
 
-export default function Notice130Form({
+export default function NoticeForm({
   caseId,
   persons,
   formId,
