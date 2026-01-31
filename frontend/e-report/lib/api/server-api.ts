@@ -3,9 +3,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const BASE_URL = "https://e-report-t9xh.onrender.com";
-// const BASE_URL = "localhost:8099";
-
+// const BASE_URL = "https://e-report-t9xh.onrender.com"
+const BASE_URL = "http://localhost:8099";
 
 async function refreshAccessToken() {
   try {
@@ -31,7 +30,9 @@ async function refreshAccessToken() {
     return data.accessToken;
   } catch (error) {
     (await cookies()).delete("accessToken");
-    redirect("/login");
+    // Re-throw the error instead of calling redirect
+    // This will be caught in serverFetch and handled properly
+    throw new Error("Session expired. Please login again.");
   }
 }
 
@@ -128,9 +129,15 @@ export async function serverFetchMultipart<T>(
   }
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    console.error("API Error:", errorData);
-    throw new Error(errorData.message || "API request failed");
+    let errorMessage = "API request failed";
+    try {
+      const errorData = await res.json();
+      errorMessage = errorData.message || errorData.error || errorMessage;
+      console.error("API Error Response:", errorData);
+    } catch (e) {
+      console.error("Failed to parse error response:", e);
+    }
+    throw new Error(`[${res.status}] ${errorMessage}`);
   }
 
   const responseData = await res.json();

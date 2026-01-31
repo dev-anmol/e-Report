@@ -1,10 +1,9 @@
 "use server";
 
-import { serverFetchMultipart } from "@/lib/api/server-api"; // Adjust path
+import { serverFetchMultipart } from "@/lib/api/server-api";
 
-export async function createApplicant(formData: FormData) {
+export async function createWitness(formData: FormData) {
     try {
-        // Extract data from FormData
         const caseId = formData.get("caseId") as string;
         const name = formData.get("name") as string;
         const role = formData.get("role") as string;
@@ -16,7 +15,10 @@ export async function createApplicant(formData: FormData) {
         const signature = formData.get("signature") as File | null;
         const document = formData.get("document") as File | null;
 
-        // Map gender to API format
+        console.log("=== Creating Witness ===");
+        console.log("Name:", name);
+
+        // Map gender
         const genderMap: Record<string, string> = {
             MALE: "M",
             FEMALE: "F",
@@ -24,7 +26,7 @@ export async function createApplicant(formData: FormData) {
         };
         const apiGender = genderMap[gender] || gender;
 
-        // Create new FormData for API - reconstruct properly
+        // Create FormData for API
         const apiFormData = new FormData();
         apiFormData.append("name", name);
         apiFormData.append("role", role);
@@ -33,33 +35,27 @@ export async function createApplicant(formData: FormData) {
         apiFormData.append("mobile", mobile);
         apiFormData.append("address", address);
 
-        // Append files only if they exist and have size
-        if (photo instanceof File && photo.size > 0) {
+        if (photo && photo.size > 0) {
             apiFormData.append("photo", photo, photo.name);
         }
-        if (signature instanceof File && signature.size > 0) {
+        if (signature && signature.size > 0) {
             apiFormData.append("signature", signature, signature.name);
         }
-        if (document instanceof File && document.size > 0) {
+        if (document && document.size > 0) {
             apiFormData.append("document", document, document.name);
         }
 
-        const result = await serverFetchMultipart<{ 
-            success: boolean;
-            personId: string;
-            files: {
-                photo?: string;
-                signature?: string;
-                document?: string;
-            };
-        }>(`/cases/${caseId}/persons`, apiFormData);
+        const result = await serverFetchMultipart(
+            `/cases/${caseId}/persons`,
+            apiFormData
+        );
 
         return { success: true, data: result };
     } catch (error) {
-        console.error("Error creating applicant:", error);
+        console.error("Error creating witness:", error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : "Failed to create applicant",
+            error: error instanceof Error ? error.message : "Failed to create witness",
         };
     }
 }

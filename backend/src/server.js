@@ -5,6 +5,7 @@ const cors = require("cors")
 const helmet = require("helmet")
 const morgan = require("morgan")
 const cookieParser = require("cookie-parser")
+const xss = require("xss-clean");
 
 const connectDB = require("./config/mongoConfig")
 const authRoutes = require("./routes/authRoutes")
@@ -13,12 +14,16 @@ const personRoutes = require("./routes/personRoutes")
 const policeStationRoutes = require("./routes/policeStationRoutes")
 const formRoutes = require("./routes/formRoutes")
 const adminRoutes = require("./routes/adminRoutes")
+const rateLimiter = require("./middleware/rateLimitterMiddleware");
 
 const app = express()
 
 // MIDDLEWARE ORDER (IMPORTANT)
-app.use(express.json())
-app.use(cookieParser())  
+// Don't use express.json() globally - it will interfere with multipart
+// multer needs to handle multipart data, then express.json() for json
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(cookieParser())
 app.use(cors({
   origin: true,
   credentials: true
@@ -26,6 +31,21 @@ app.use(cors({
 app.use(helmet())
 app.use(morgan("dev"))
 
+
+app.use(
+  cors({
+    origin: ["http://localhost:3000"],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// XSS protection
+app.use(xss());
+
+// Global Rate Limiter
+app.use(rateLimiter);
 
 // Health check
 app.get("/", (req, res) => {
@@ -40,8 +60,23 @@ app.use("/", policeStationRoutes)
 app.use("/", formRoutes)
 app.use("/", adminRoutes)
 
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("=== Global Error Handler ===");
+  console.error("Error:", err.message);
+  console.error("Stack:", err.stack);
 
-const PORT = process.env.PORT || 8081;
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+
+  res.status(statusCode).json({
+    success: false,
+    message,
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack })
+  });
+});
+
+const PORT = 8099;
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
