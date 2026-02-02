@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp, User, Users, FileText, UserPlus, ArrowLeft, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, User, Users, FileText, UserPlus, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCaseByIdAction, getPersonsByCaseAction, Case, Person } from "@/lib/actions/cases";
@@ -10,6 +10,7 @@ import { getFormsByCaseAction } from "@/lib/actions/forms";
 import ApplicantForm from "@/components/forms/ApplicantForm";
 import DefendantsForm from "@/components/forms/DefendantsForm";
 import WitnessesForm from "@/components/forms/WitnessesForm";
+import FormsSection from "@/components/forms/FormsSection";
 
 // Mock data
 const MOCK_CASE: Case = {
@@ -49,14 +50,16 @@ function ExpandableSection({
   count,
   variant = "default",
   children,
+  defaultOpen = false,
 }: {
   title: string;
   icon: React.ElementType;
   count?: number;
   variant?: "default" | "applicant" | "defendant" | "witness" | "forms";
   children: React.ReactNode;
+  defaultOpen?: boolean;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const variants = {
     default: {
@@ -115,14 +118,14 @@ function ExpandableSection({
             <h3 className="font-semibold text-lg">{title}</h3>
             {count !== undefined && (
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {count} item{count !== 1 ? "s" : ""}
+                {count} form{count !== 1 ? "s" : ""} created
               </p>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {!isOpen && count === 0 && (
-            <span className="text-xs text-gray-400">Click to add</span>
+          {!isOpen && (
+            <span className="text-xs text-gray-400">Click to create forms</span>
           )}
           {isOpen ? (
             <ChevronUp size={20} className="text-gray-500" />
@@ -134,7 +137,7 @@ function ExpandableSection({
 
       {/* Content - Only visible when open */}
       <div
-        className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? "max-h-[3000px] opacity-100" : "max-h-0 opacity-0"
           }`}
       >
         <div className="p-4 pt-0">{children}</div>
@@ -299,15 +302,20 @@ export default function CaseForm({ caseId }: CaseFormProps) {
           <WitnessesForm caseId={caseId} />
         </ExpandableSection>
 
-        {/* Forms Section */}
+        {/* Forms Section - UPDATED WITH TABS */}
         <ExpandableSection
           title="Forms & Documents"
           icon={FileText}
           count={forms.length}
           variant="forms"
+          defaultOpen={false}
         >
-          <div className="space-y-4">
-            {forms.length > 0 ? (
+          {/* Show created forms count if any */}
+          {forms.length > 0 && (
+            <div className="mb-6 space-y-2">
+              <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300">
+                Created Forms ({forms.length})
+              </h4>
               <div className="space-y-2">
                 {forms.map((form) => (
                   <div
@@ -323,19 +331,23 @@ export default function CaseForm({ caseId }: CaseFormProps) {
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="text-gray-500 text-center py-4">
-                No forms created yet
-              </p>
-            )}
-            <Button className="w-full" disabled>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Form
-            </Button>
+              <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
+            </div>
+          )}
+
+          {/* Forms Creation Tabs */}
+          <div>
+            <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-4">
+              Create New Forms
+            </h4>
+            <FormsSection
+              caseId={caseId}
+              defendants={defendants.map(d => ({ _id: d._id, name: d.name }))}
+              witnesses={witnesses.map(w => ({ _id: w._id, name: w.name }))}
+            />
           </div>
         </ExpandableSection>
       </div>
     </div>
   );
 }
-
