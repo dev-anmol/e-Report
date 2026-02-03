@@ -9,12 +9,11 @@ const { createCase,getMyCases, getCaseById } = require("../controller/caseContro
 router.post(
   "/cases",
   auth,
-//   checkRole("OFFICER", "ADMIN"),
+  checkRole("OFFICER", "ADMIN"),
   createCase
 )
 
-router.post("/cases", createCase)
-router.get("/cases", getMyCases)
-router.get("/cases/:caseId", getCaseById)
+router.get("/cases", auth, getMyCases)
+router.get("/cases/:caseId", auth, getCaseById)
 
 module.exports = router

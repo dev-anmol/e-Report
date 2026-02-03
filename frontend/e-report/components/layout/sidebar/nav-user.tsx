@@ -30,6 +30,7 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar"
 import { ThemeSwitcher } from "@/components/ui/ThemeToggle"
+import { logoutAction } from "@/lib/actions/auth"
 
 export function NavUser({
     user,
@@ -103,10 +104,17 @@ export function NavUser({
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            <LogOut />
-                            Log out
-                        </DropdownMenuItem>
+                        <form action={logoutAction}>
+                            <DropdownMenuItem asChild>
+                                <button
+                                    type="submit"
+                                    className="flex w-full items-center gap-2"
+                                >
+                                    <LogOut className="size-4" />
+                                    Log out
+                                </button>
+                            </DropdownMenuItem>
+                        </form>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>

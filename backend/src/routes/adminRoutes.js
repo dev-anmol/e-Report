@@ -5,8 +5,6 @@ const {
   getPendingForms,
   approveForm,
   rejectForm,
-  issueForm,
-  getSubmittedForms,
   getFormForAdmin,
   issueCaseFileController
 } = require("../controller/adminFormController")
@@ -22,15 +20,15 @@ router.use(auth)
 router.get("/admin/forms/pending", getPendingForms)
 router.post("/admin/forms/:formId/approve", approveForm)
 router.post("/admin/forms/:formId/reject", rejectForm)
-router.post("/admin/forms/:formId/issue", issueForm)
+// router.post("/admin/forms/:formId/issue", issueForm)
 
-router.get("/admin/forms/submitted", getSubmittedForms)
+router.get("/admin/forms/pending", getPendingForms)
 router.get("/admin/forms/:formId", getFormForAdmin)
 router.post("/api/casefiles/issue", issueCaseFileController)
 router.post(
   "/cases/:caseId/roznama/entries",
   auth,
-  requireAdmin,
+  requireRole("ADMIN"),
   addRoznamaEntry
 )
 

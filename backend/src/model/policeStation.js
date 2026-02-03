@@ -26,6 +26,11 @@ const policeStationSchema = new mongoose.Schema(
       trim: true
     },
 
+    taluka: {
+      type: String,
+      trim: true
+    },
+
     isActive: {
       type: Boolean,
       default: true,
@@ -35,4 +40,6 @@ const policeStationSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-module.exports = mongoose.model("Policestation", policeStationSchema)
+module.exports =
+  mongoose.models.Policestation ||
+  mongoose.model("Policestation", policeStationSchema);
