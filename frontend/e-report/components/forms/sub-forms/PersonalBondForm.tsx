@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { useState, useTransition, useEffect } from "react";
 import { createPersonalBond } from "@/lib/actions/createPersonalBond";
+import { updateFormAction } from "@/lib/actions/forms";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const personalBond125Schema = z.object({
@@ -72,31 +73,37 @@ export default function PersonalBond125Form({ caseId, applicants, defendants, in
 
     startTransition(async () => {
       try {
-        const result = await createPersonalBond({
-          caseId,
-          formType: "PERSONAL_BOND_125",
-          content: {
-            mr: {
-              personIds: values.personIds,
-              bond: {
-                amount: parseInt(values.bondAmount),
-                durationMonths: parseInt(values.durationMonths),
-              },
+        const content = {
+          mr: {
+            personIds: values.personIds,
+            bond: {
+              amount: parseInt(values.bondAmount),
+              durationMonths: parseInt(values.durationMonths),
             },
           },
-        });
+        };
+
+        const result = initialData
+          ? await updateFormAction(initialData._id, content)
+          : await createPersonalBond({
+            caseId,
+            formType: "PERSONAL_BOND_125",
+            content,
+          });
 
         if (result.success) {
-          setSuccessMessage("Personal Bond 125 created successfully!");
+          setSuccessMessage(initialData ? "Personal Bond 125 updated successfully!" : "Personal Bond 125 created successfully!");
           if (onSuccess) onSuccess();
-          form.reset({
-            ...form.getValues(),
-            bondAmount: "",
-            durationMonths: "",
-          });
+          if (!initialData) {
+            form.reset({
+              ...form.getValues(),
+              bondAmount: "",
+              durationMonths: "",
+            });
+          }
           setTimeout(() => setSuccessMessage(null), 3000);
         } else {
-          setErrorMessage(result.error || "Failed to create bond");
+          setErrorMessage(result.error || `Failed to ${initialData ? 'update' : 'create'} bond`);
         }
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : "An error occurred");
@@ -179,7 +186,9 @@ export default function PersonalBond125Form({ caseId, applicants, defendants, in
         </div>
 
         <Button type="submit" disabled={isPending} className="w-full">
-          {isPending ? "Creating..." : "Create Personal Bond 125"}
+          {isPending
+            ? (initialData ? "Updating..." : "Creating...")
+            : (initialData ? "Update Personal Bond 125" : "Create Personal Bond 125")}
         </Button>
       </FieldGroup>
     </form>

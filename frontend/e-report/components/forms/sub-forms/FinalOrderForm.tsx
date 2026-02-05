@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { useState, useTransition, useEffect } from "react";
 import { createFinalOrder } from "@/lib/actions/createFinalOrder";
+import { updateFormAction } from "@/lib/actions/forms";
 import { Textarea } from "@/components/ui/textarea";
 
 
@@ -80,33 +81,39 @@ export function FinalOrderForm({ caseId, applicants, defendants, witnesses, init
 
         startTransition(async () => {
             try {
-                const result = await createFinalOrder({
-                    caseId,
-                    formType: "FINAL_ORDER",
-                    content: {
-                        mr: {
-                            hearingDate: values.hearingDate,
-                            outcomeType: values.outcomeType,
-                            outcome: {
-                                bondAmount: values.bondAmount ? parseInt(values.bondAmount) : undefined,
-                                bondDurationMonths: values.bondDurationMonths ? parseInt(values.bondDurationMonths) : undefined,
-                                suretyRequired: values.suretyRequired,
-                                suretyCount: values.suretyCount ? parseInt(values.suretyCount) : undefined,
-                                nextHearingDate: values.nextHearingDate || undefined,
-                                nextHearingPlace: values.nextHearingPlace || undefined,
-                            },
-                            remarks: values.remarks,
+                const content = {
+                    mr: {
+                        hearingDate: values.hearingDate,
+                        outcomeType: values.outcomeType,
+                        outcome: {
+                            bondAmount: values.bondAmount ? parseInt(values.bondAmount) : undefined,
+                            bondDurationMonths: values.bondDurationMonths ? parseInt(values.bondDurationMonths) : undefined,
+                            suretyRequired: values.suretyRequired,
+                            suretyCount: values.suretyCount ? parseInt(values.suretyCount) : undefined,
+                            nextHearingDate: values.nextHearingDate || undefined,
+                            nextHearingPlace: values.nextHearingPlace || undefined,
                         },
+                        remarks: values.remarks,
                     },
-                });
+                };
+
+                const result = initialData
+                    ? await updateFormAction(initialData._id, content)
+                    : await createFinalOrder({
+                        caseId,
+                        formType: "FINAL_ORDER",
+                        content,
+                    });
 
                 if (result.success) {
-                    setSuccessMessage("Final order created successfully!");
+                    setSuccessMessage(initialData ? "Final order updated successfully!" : "Final order created successfully!");
                     if (onSuccess) onSuccess();
-                    form.reset();
+                    if (!initialData) {
+                        form.reset();
+                    }
                     setTimeout(() => setSuccessMessage(null), 3000);
                 } else {
-                    setErrorMessage(result.error || "Failed to create order");
+                    setErrorMessage(result.error || `Failed to ${initialData ? 'update' : 'create'} order`);
                 }
             } catch (error) {
                 setErrorMessage(error instanceof Error ? error.message : "An error occurred");
@@ -269,7 +276,9 @@ export function FinalOrderForm({ caseId, applicants, defendants, witnesses, init
                 />
 
                 <Button type="submit" disabled={isPending} className="w-full">
-                    {isPending ? "Creating..." : "Create Final Order"}
+                    {isPending
+                        ? (initialData ? "Updating..." : "Creating...")
+                        : (initialData ? "Update Final Order" : "Create Final Order")}
                 </Button>
             </FieldGroup>
         </form>
