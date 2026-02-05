@@ -3,7 +3,8 @@
 import {
   Plus,
   Settings2,
-  SquareTerminal
+  SquareTerminal,
+  FolderOpen
 } from "lucide-react"
 import * as React from "react"
 
@@ -35,10 +36,10 @@ const data = {
       hasChilds: false
     },
     {
-      title: "New Case",
-      url: '/cases/new',
-      icon: Plus,
-      isActive: true,
+      title: "Cases",
+      url: '/cases',
+      icon: FolderOpen,
+      isActive: true, // Keep it active or conditional? Probably leave as is for now or set false. The previous one was true.
       hasChilds: false
     },
     {

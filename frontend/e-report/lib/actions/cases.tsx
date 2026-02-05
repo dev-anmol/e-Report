@@ -134,3 +134,35 @@ export async function getPersonsByCaseAction(caseId: string) {
   }
 }
 
+
+// ======================
+// GET ALL CASES
+// ======================
+interface GetCasesResponse {
+  success: boolean;
+  cases: Case[];
+}
+
+export async function getCasesAction() {
+  try {
+    const result = await serverFetch<GetCasesResponse>("/cases");
+    return { success: true, data: result.cases };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to fetch cases";
+
+    if (
+      errorMessage.includes("Session expired") ||
+      errorMessage.includes("Invalid or expired token")
+    ) {
+      redirect("/login");
+    }
+
+    console.error("Error fetching all cases:", error);
+    return {
+      success: false,
+      error: errorMessage,
+      data: [],
+    };
+  }
+}

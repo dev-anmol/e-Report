@@ -5,7 +5,7 @@ interface SuretyBond126Data {
     formType: "SURETY_BOND_126";
     content: {
         mr: {
-            accusedPersonIds: string[];
+            personIds: string[];
             bond: {
                 amount: number;
                 durationMonths: number;

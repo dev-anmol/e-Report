@@ -102,8 +102,10 @@ export async function serverFetchMultipart<T>(
     }
   }
 
-  const makeRequest = (token?: string) =>
-    fetch(`${BASE_URL}${endpoint}`, {
+  const makeRequest = (token?: string) => {
+    const fullUrl = `${BASE_URL}${endpoint}`;
+    console.log("Full Request URL:", fullUrl);
+    return fetch(fullUrl, {
       method: "POST",
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -113,11 +115,12 @@ export async function serverFetchMultipart<T>(
       cache: "no-store",
       credentials: "include",
     });
+  };
 
   let res = await makeRequest(accessToken);
 
   console.log("Response status:", res.status);
-  
+
   if (res.status === 401) {
     try {
       accessToken = await refreshAccessToken();

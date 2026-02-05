@@ -175,7 +175,7 @@ export default function CaseForm({ caseId }: CaseFormProps) {
         if (personsResult.success && personsResult.data) {
           setPersons(personsResult.data as Person[]);
         } else {
-          setPersons(MOCK_PERSONS);
+          setPersons([]);
         }
 
         // Fetch forms
@@ -187,7 +187,7 @@ export default function CaseForm({ caseId }: CaseFormProps) {
         console.error("Error fetching case data:", err);
         setError(err instanceof Error ? err.message : "Failed to load case data");
         setCaseData(MOCK_CASE);
-        setPersons(MOCK_PERSONS);
+        setPersons([]);
       } finally {
         setLoading(false);
       }
@@ -200,6 +200,14 @@ export default function CaseForm({ caseId }: CaseFormProps) {
   const applicant = persons.find((p) => p.role === "APPLICANT");
   const defendants = persons.filter((p) => p.role === "DEFENDANT");
   const witnesses = persons.filter((p) => p.role === "WITNESS");
+
+  // Workflow validation: Forms can only be shown after applicant + defendants are added
+  const canShowForms = applicant && defendants.length > 0;
+  const formsBlockedReason = !applicant
+    ? "Please add an Applicant first"
+    : defendants.length === 0
+      ? "Please add at least one Defendant"
+      : null;
 
   // Loading skeleton
   if (loading) {
@@ -279,7 +287,7 @@ export default function CaseForm({ caseId }: CaseFormProps) {
           count={applicant ? 1 : 0}
           variant="applicant"
         >
-          <ApplicantForm caseId={caseId} />
+          <ApplicantForm caseId={caseId} existingApplicant={applicant} />
         </ExpandableSection>
 
         {/* Defendants Section */}
@@ -289,7 +297,7 @@ export default function CaseForm({ caseId }: CaseFormProps) {
           count={defendants.length}
           variant="defendant"
         >
-          <DefendantsForm caseId={caseId} />
+          <DefendantsForm caseId={caseId} existingDefendants={defendants} />
         </ExpandableSection>
 
         {/* Witnesses Section */}
@@ -299,54 +307,162 @@ export default function CaseForm({ caseId }: CaseFormProps) {
           count={witnesses.length}
           variant="witness"
         >
-          <WitnessesForm caseId={caseId} />
+          <WitnessesForm caseId={caseId} existingWitnesses={witnesses} />
         </ExpandableSection>
 
-        {/* Forms Section - UPDATED WITH TABS */}
-        <ExpandableSection
-          title="Forms & Documents"
-          icon={FileText}
-          count={forms.length}
-          variant="forms"
-          defaultOpen={false}
-        >
-          {/* Show created forms count if any */}
-          {forms.length > 0 && (
-            <div className="mb-6 space-y-2">
-              <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300">
-                Created Forms ({forms.length})
+        {/* Forms Section - CONDITIONAL RENDERING */}
+        {canShowForms ? (
+          <ExpandableSection
+            title="Forms & Documents"
+            icon={FileText}
+            count={forms.length}
+            variant="forms"
+            defaultOpen={false}
+          >
+            {/* Show created forms count if any */}
+            {forms.length > 0 && (
+              <div className="mb-6 space-y-2">
+                <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300">
+                  Created Forms ({forms.length})
+                </h4>
+                <div className="space-y-2">
+                  {forms.map((form) => (
+                    <div
+                      key={form._id}
+                      className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg flex justify-between items-center"
+                    >
+                      <div>
+                        <p className="font-medium">{form.formType}</p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(form.createdAt).toLocaleDateString()} - {form.status}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
+              </div>
+            )}
+
+            {/* Forms Creation Tabs */}
+            <div>
+              <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-4">
+                Create New Forms
+              </h4>
+              <FormsSection
+                caseId={caseId}
+                applicants={persons.filter(p => p.role === "APPLICANT").map(p => ({ _id: p._id, name: p.name }))}
+                defendants={defendants.map(d => ({ _id: d._id, name: d.name }))}
+                witnesses={witnesses.map(w => ({ _id: w._id, name: w.name }))}
+              />
+            </div>
+          </ExpandableSection>
+        ) : (
+          <div className="rounded-lg border-2 border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900">
+                <FileText size={20} className="text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg text-yellow-900 dark:text-yellow-100">
+                  Forms & Documents (Locked)
+                </h3>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  Complete the prerequisites to unlock this section
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-yellow-100 dark:bg-yellow-900/50 rounded-lg mb-4">
+              <p className="text-yellow-800 dark:text-yellow-200 font-medium mb-2">
+                ⚠️ {formsBlockedReason}
+              </p>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Forms can only be created after adding an Applicant and at least one Defendant.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm text-yellow-900 dark:text-yellow-100">
+                Prerequisites Checklist:
               </h4>
               <div className="space-y-2">
-                {forms.map((form) => (
-                  <div
-                    key={form._id}
-                    className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg flex justify-between items-center"
-                  >
-                    <div>
-                      <p className="font-medium">{form.formType}</p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(form.createdAt).toLocaleDateString()} - {form.status}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg">
+                  <div className={`flex items-center justify-center w-6 h-6 rounded-full ${applicant
+                    ? "bg-green-100 dark:bg-green-900"
+                    : "bg-gray-100 dark:bg-gray-700"
+                    }`}>
+                    {applicant ? (
+                      <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
+                    ) : (
+                      <span className="text-gray-400">○</span>
+                    )}
                   </div>
-                ))}
-              </div>
-              <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
-            </div>
-          )}
+                  <div className="flex-1">
+                    <p className={`font-medium ${applicant
+                      ? "text-green-700 dark:text-green-300"
+                      : "text-gray-600 dark:text-gray-400"
+                      }`}>
+                      Applicant Added
+                    </p>
+                    {!applicant && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Add applicant details in the section above
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-          {/* Forms Creation Tabs */}
-          <div>
-            <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-4">
-              Create New Forms
-            </h4>
-            <FormsSection
-              caseId={caseId}
-              defendants={defendants.map(d => ({ _id: d._id, name: d.name }))}
-              witnesses={witnesses.map(w => ({ _id: w._id, name: w.name }))}
-            />
+                <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg">
+                  <div className={`flex items-center justify-center w-6 h-6 rounded-full ${defendants.length > 0
+                    ? "bg-green-100 dark:bg-green-900"
+                    : "bg-gray-100 dark:bg-gray-700"
+                    }`}>
+                    {defendants.length > 0 ? (
+                      <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
+                    ) : (
+                      <span className="text-gray-400">○</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-medium ${defendants.length > 0
+                      ? "text-green-700 dark:text-green-300"
+                      : "text-gray-600 dark:text-gray-400"
+                      }`}>
+                      At least 1 Defendant Added
+                    </p>
+                    {defendants.length === 0 ? (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Add defendant details in the section above
+                      </p>
+                    ) : (
+                      <p className="text-xs text-green-600 dark:text-green-400">
+                        {defendants.length} defendant{defendants.length > 1 ? 's' : ''} added
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900">
+                    <span className="text-blue-600 dark:text-blue-400 text-xs">i</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-600 dark:text-gray-400">
+                      Witnesses (Optional)
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {witnesses.length > 0
+                        ? `${witnesses.length} witness${witnesses.length > 1 ? 'es' : ''} added`
+                        : "You can add witnesses, but they are not required for forms"
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </ExpandableSection>
+        )}
       </div>
     </div>
   );

@@ -26,9 +26,12 @@ type FinalOrderFormValues = z.infer<typeof finalOrderSchema>;
 
 interface FinalOrderFormProps {
     caseId: string;
+    applicants: Array<{ _id: string; name: string }>;
+    defendants: Array<{ _id: string; name: string }>;
+    witnesses: Array<{ _id: string; name: string }>;
 }
 
-export function FinalOrderForm({ caseId }: FinalOrderFormProps) {
+export function FinalOrderForm({ caseId, applicants, defendants, witnesses }: FinalOrderFormProps) {
     const [isPending, startTransition] = useTransition();
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);

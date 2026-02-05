@@ -30,7 +30,9 @@ type FormValues = Omit<SectionOneApplicantValues, 'applicant'> & {
     applicant: Omit<SectionOneApplicantValues['applicant'], 'photo' | 'signature' | 'document'>;
 };
 
-export default function ApplicantForm({ caseId }: { caseId: string }) {
+import { Person } from "@/lib/actions/cases";
+
+export default function ApplicantForm({ caseId, existingApplicant }: { caseId: string, existingApplicant?: Person }) {
     const router = useRouter();
     // File states - kept separate from form
     const [document, setDocument] = useState<File | null>(null);
@@ -43,8 +45,24 @@ export default function ApplicantForm({ caseId }: { caseId: string }) {
 
 
     useEffect(() => {
-        console.log(`${caseId}`)
-    }, [])
+        if (existingApplicant) {
+            console.log("Prefilling applicant form with:", existingApplicant);
+            setIsSubmitted(true);
+            setSuccessMessage(`Applicant "${existingApplicant.name}" details loaded.`);
+
+            form.reset({
+                caseId,
+                applicant: {
+                    name: existingApplicant.name,
+                    age: existingApplicant.age?.toString() || "",
+                    gender: (existingApplicant.gender === "M" ? "MALE" : existingApplicant.gender === "F" ? "FEMALE" : "OTHER") as any,
+                    mobile: existingApplicant.mobile || "",
+                    address: existingApplicant.address || "",
+                    role: "APPLICANT"
+                }
+            });
+        }
+    }, [existingApplicant, caseId]);
 
     const handleDocument = (files: File[]) => {
         if (files.length > 0) {

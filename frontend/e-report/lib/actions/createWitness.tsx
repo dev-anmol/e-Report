@@ -28,6 +28,7 @@ export async function createWitness(formData: FormData) {
 
         // Create FormData for API
         const apiFormData = new FormData();
+        apiFormData.append("caseId", caseId); // Add caseId to body
         apiFormData.append("name", name);
         apiFormData.append("role", role);
         apiFormData.append("age", age);

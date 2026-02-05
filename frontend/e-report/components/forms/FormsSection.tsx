@@ -12,11 +12,12 @@ import { FinalOrderForm } from "./sub-forms/FinalOrderForm";
 
 interface FormsSectionProps {
     caseId: string;
+    applicants: Array<{ _id: string; name: string }>;
     defendants: Array<{ _id: string; name: string }>;
     witnesses: Array<{ _id: string; name: string }>;
 }
 
-export default function FormsSection({ caseId, defendants, witnesses }: FormsSectionProps) {
+export default function FormsSection({ caseId, applicants, defendants, witnesses }: FormsSectionProps) {
     const [activeTab, setActiveTab] = useState("notice-130");
 
     const formTabs = [
@@ -95,6 +96,7 @@ export default function FormsSection({ caseId, defendants, witnesses }: FormsSec
                             </div>
                             <FormComponent
                                 caseId={caseId}
+                                applicants={applicants}
                                 defendants={defendants}
                                 witnesses={witnesses}
                             />
