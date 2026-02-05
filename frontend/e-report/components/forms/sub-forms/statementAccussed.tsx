@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { useState, useTransition, useEffect } from "react";
 import { createStatementAccused } from "@/lib/actions/createStatementAccussed";
+import { updateFormAction } from "@/lib/actions/forms";
 
 const statementAccusedSchema = z.object({
     personId: z.string().min(1, "Select person"),
@@ -64,27 +65,33 @@ export default function StatementAccusedForm({ caseId, applicants, initialData, 
 
         startTransition(async () => {
             try {
-                const result = await createStatementAccused({
-                    caseId,
-                    formType: "STATEMENT_ACCUSED",
-                    content: {
-                        mr: {
-                            personId: values.personId,
-                            statement: values.statement,
-                        },
+                const content = {
+                    mr: {
+                        personId: values.personId,
+                        statement: values.statement,
                     },
-                });
+                };
+
+                const result = initialData
+                    ? await updateFormAction(initialData._id, content)
+                    : await createStatementAccused({
+                        caseId,
+                        formType: "STATEMENT_ACCUSED",
+                        content,
+                    });
 
                 if (result.success) {
-                    setSuccessMessage("Complainant statement recorded successfully!");
+                    setSuccessMessage(initialData ? "Statement updated successfully!" : "Complainant statement recorded successfully!");
                     if (onSuccess) onSuccess();
-                    form.reset({
-                        personId: primaryApplicant?._id || "",
-                        statement: "",
-                    });
+                    if (!initialData) {
+                        form.reset({
+                            personId: primaryApplicant?._id || "",
+                            statement: "",
+                        });
+                    }
                     setTimeout(() => setSuccessMessage(null), 3000);
                 } else {
-                    setErrorMessage(result.error || "Failed to record statement");
+                    setErrorMessage(result.error || `Failed to ${initialData ? 'update' : 'record'} statement`);
                 }
             } catch (error) {
                 setErrorMessage(error instanceof Error ? error.message : "An error occurred");
@@ -144,7 +151,9 @@ export default function StatementAccusedForm({ caseId, applicants, initialData, 
                 />
 
                 <Button type="submit" disabled={isPending} className="w-full">
-                    {isPending ? "Recording..." : "Record Accused Statement"}
+                    {isPending
+                        ? (initialData ? "Updating..." : "Recording...")
+                        : (initialData ? "Update Statement" : "Record Accused Statement")}
                 </Button>
             </FieldGroup>
         </form>

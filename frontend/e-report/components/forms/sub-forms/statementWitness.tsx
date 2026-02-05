@@ -9,6 +9,7 @@ import { z } from "zod";
 import { useState, useTransition, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { createStatementWitness } from "@/lib/actions/createStatementWitness";
+import { updateFormAction } from "@/lib/actions/forms";
 
 const statementWitnessSchema = z.object({
     personId: z.string().min(1, "Select a statement provider"),
@@ -71,24 +72,30 @@ export function StatementWitnessForm({ caseId, applicants, witnesses, initialDat
 
         startTransition(async () => {
             try {
-                const result = await createStatementWitness({
-                    caseId,
-                    formType: "STATEMENT_WITNESS",
-                    content: {
-                        mr: {
-                            personId: values.personId,
-                            statement: values.statement,
-                        },
+                const content = {
+                    mr: {
+                        personId: values.personId,
+                        statement: values.statement,
                     },
-                });
+                };
+
+                const result = initialData
+                    ? await updateFormAction(initialData._id, content)
+                    : await createStatementWitness({
+                        caseId,
+                        formType: "STATEMENT_WITNESS",
+                        content,
+                    });
 
                 if (result.success) {
-                    setSuccessMessage("Statement recorded successfully!");
+                    setSuccessMessage(initialData ? "Statement updated successfully!" : "Statement recorded successfully!");
                     if (onSuccess) onSuccess();
-                    form.reset();
+                    if (!initialData) {
+                        form.reset();
+                    }
                     setTimeout(() => setSuccessMessage(null), 3000);
                 } else {
-                    setErrorMessage(result.error || "Failed to record statement");
+                    setErrorMessage(result.error || `Failed to ${initialData ? 'update' : 'record'} statement`);
                 }
             } catch (error) {
                 setErrorMessage(error instanceof Error ? error.message : "An error occurred");
@@ -159,7 +166,9 @@ export function StatementWitnessForm({ caseId, applicants, witnesses, initialDat
                 />
 
                 <Button type="submit" disabled={isPending} className="w-full">
-                    {isPending ? "Recording..." : "Record Witness Statement"}
+                    {isPending
+                        ? (initialData ? "Updating..." : "Recording...")
+                        : (initialData ? "Update Statement" : "Record Witness Statement")}
                 </Button>
             </FieldGroup>
         </form>

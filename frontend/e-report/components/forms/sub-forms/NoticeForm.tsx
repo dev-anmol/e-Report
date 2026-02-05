@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { useState, useTransition, useEffect } from "react";
 import { createNotice } from "@/lib/actions/createNotice";
+import { updateFormAction } from "@/lib/actions/forms";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const noticeFormSchema = z.object({
@@ -76,35 +77,41 @@ export default function Notice130Form({ caseId, applicant, defendants, initialDa
 
     startTransition(async () => {
       try {
-        const result = await createNotice({
-          caseId,
-          formType: "NOTICE_130",
-          content: {
-            mr: {
-              personIds: values.personIds,
-              facts: values.facts,
-              hearing: {
-                date: values.hearingDate,
-                time: values.hearingTime,
-                place: values.hearingPlace,
-              },
+        const content = {
+          mr: {
+            personIds: values.personIds,
+            facts: values.facts,
+            hearing: {
+              date: values.hearingDate,
+              time: values.hearingTime,
+              place: values.hearingPlace,
             },
           },
-        });
+        };
+
+        const result = initialData
+          ? await updateFormAction(initialData._id, content)
+          : await createNotice({
+            caseId,
+            formType: "NOTICE_130",
+            content,
+          });
 
         if (result.success) {
-          setSuccessMessage("Notice 130 created successfully!");
+          setSuccessMessage(initialData ? "Notice 130 updated successfully!" : "Notice 130 created successfully!");
           if (onSuccess) onSuccess();
-          form.reset({
-            ...form.getValues(),
-            facts: "",
-            hearingDate: "",
-            hearingTime: "",
-            hearingPlace: "",
-          });
+          if (!initialData) {
+            form.reset({
+              ...form.getValues(),
+              facts: "",
+              hearingDate: "",
+              hearingTime: "",
+              hearingPlace: "",
+            });
+          }
           setTimeout(() => setSuccessMessage(null), 3000);
         } else {
-          setErrorMessage(result.error || "Failed to create notice");
+          setErrorMessage(result.error || `Failed to ${initialData ? 'update' : 'create'} notice`);
         }
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : "An error occurred");
@@ -220,7 +227,9 @@ export default function Notice130Form({ caseId, applicant, defendants, initialDa
         />
 
         <Button type="submit" disabled={isPending} className="w-full">
-          {isPending ? "Creating..." : "Create Notice 130"}
+          {isPending
+            ? (initialData ? "Updating..." : "Creating...")
+            : (initialData ? "Update Notice 130" : "Create Notice 130")}
         </Button>
       </FieldGroup>
     </form>

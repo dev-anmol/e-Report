@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { useState, useTransition, useEffect } from "react";
 import { createSuretyBond126 } from "@/lib/actions/createSuretyForm";
+import { updateFormAction } from "@/lib/actions/forms";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const suretyBond126Schema = z.object({
@@ -69,33 +70,39 @@ export function SuretyBond126Form({ caseId, applicants, defendants, initialData,
 
     startTransition(async () => {
       try {
-        const result = await createSuretyBond126({
-          caseId,
-          formType: "SURETY_BOND_126",
-          content: {
-            mr: {
-              personIds: values.personIds,
-              bond: {
-                amount: parseInt(values.bondAmount),
-                durationMonths: parseInt(values.durationMonths),
-                suretyCount: parseInt(values.suretyCount),
-              },
+        const content = {
+          mr: {
+            personIds: values.personIds,
+            bond: {
+              amount: parseInt(values.bondAmount),
+              durationMonths: parseInt(values.durationMonths),
+              suretyCount: parseInt(values.suretyCount),
             },
           },
-        });
+        };
+
+        const result = initialData
+          ? await updateFormAction(initialData._id, content)
+          : await createSuretyBond126({
+            caseId,
+            formType: "SURETY_BOND_126",
+            content,
+          });
 
         if (result.success) {
-          setSuccessMessage("Surety Bond 126 created successfully!");
+          setSuccessMessage(initialData ? "Surety Bond 126 updated successfully!" : "Surety Bond 126 created successfully!");
           if (onSuccess) onSuccess();
-          form.reset({
-            ...form.getValues(),
-            bondAmount: "",
-            durationMonths: "",
-            suretyCount: "1",
-          });
+          if (!initialData) {
+            form.reset({
+              ...form.getValues(),
+              bondAmount: "",
+              durationMonths: "",
+              suretyCount: "1",
+            });
+          }
           setTimeout(() => setSuccessMessage(null), 3000);
         } else {
-          setErrorMessage(result.error || "Failed to create bond");
+          setErrorMessage(result.error || `Failed to ${initialData ? 'update' : 'create'} bond`);
         }
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : "An error occurred");
@@ -192,7 +199,9 @@ export function SuretyBond126Form({ caseId, applicants, defendants, initialData,
         </div>
 
         <Button type="submit" disabled={isPending} className="w-full">
-          {isPending ? "Creating..." : "Create Surety Bond 126"}
+          {isPending
+            ? (initialData ? "Updating..." : "Creating...")
+            : (initialData ? "Update Surety Bond 126" : "Create Surety Bond 126")}
         </Button>
       </FieldGroup>
     </form>
