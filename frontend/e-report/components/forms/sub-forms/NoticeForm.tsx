@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { createNotice } from "@/lib/actions/createNotice";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const noticeFormSchema = z.object({
-  accusedPersonIds: z.array(z.string()).min(1, "Select at least one accused"),
+  personIds: z.array(z.string()).min(1, "Select at least one defendant"),
   facts: z.string().min(10, "Facts must be at least 10 characters"),
   hearingDate: z.string().min(1, "Hearing date is required"),
   hearingTime: z.string().min(1, "Hearing time is required"),
@@ -23,10 +24,11 @@ type FormValues = z.infer<typeof noticeFormSchema>;
 
 interface NoticeFormProps {
   caseId: string;
+  applicant?: { _id: string; name: string } | null;
   defendants: Array<{ _id: string; name: string }>;
 }
 
-export default function Notice130Form({ caseId, defendants }: NoticeFormProps) {
+export default function Notice130Form({ caseId, applicant, defendants }: NoticeFormProps) {
   const [isPending, startTransition] = useTransition();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -34,13 +36,18 @@ export default function Notice130Form({ caseId, defendants }: NoticeFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(noticeFormSchema),
     defaultValues: {
-      accusedPersonIds: [],
+      personIds: defendants.map(d => d._id),
       facts: "",
       hearingDate: "",
       hearingTime: "",
       hearingPlace: "",
     },
   });
+
+  // Sync personIds if defendants change
+  useEffect(() => {
+    form.setValue("personIds", defendants.map(d => d._id));
+  }, [defendants, form]);
 
   const onSubmit = async (values: FormValues) => {
     setSuccessMessage(null);
@@ -53,7 +60,7 @@ export default function Notice130Form({ caseId, defendants }: NoticeFormProps) {
           formType: "NOTICE_130",
           content: {
             mr: {
-              accusedPersonIds: values.accusedPersonIds,
+              personIds: values.personIds,
               facts: values.facts,
               hearing: {
                 date: values.hearingDate,
@@ -66,7 +73,13 @@ export default function Notice130Form({ caseId, defendants }: NoticeFormProps) {
 
         if (result.success) {
           setSuccessMessage("Notice 130 created successfully!");
-          form.reset();
+          form.reset({
+            ...form.getValues(),
+            facts: "",
+            hearingDate: "",
+            hearingTime: "",
+            hearingPlace: "",
+          });
           setTimeout(() => setSuccessMessage(null), 3000);
         } else {
           setErrorMessage(result.error || "Failed to create notice");
@@ -93,40 +106,30 @@ export default function Notice130Form({ caseId, defendants }: NoticeFormProps) {
       <FieldGroup>
         <Controller
           control={form.control}
-          name="accusedPersonIds"
+          name="personIds"
           render={({ field, fieldState }) => (
             <Field>
-              <FieldLabel>Select Accused *</FieldLabel>
-              <Select
-                value={field.value[0] || ""}
-                onValueChange={(value) => {
-                  const newValues = field.value.includes(value)
-                    ? field.value.filter(id => id !== value)
-                    : [...field.value, value];
-                  field.onChange(newValues);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select accused persons">
-                    {field.value.length > 0
-                      ? `${field.value.length} accused selected`
-                      : "Select accused persons"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {defendants.map((defendant) => (
-                    <SelectItem key={defendant._id} value={defendant._id}>
+              <FieldLabel>Notice Issued To (All Defendants) *</FieldLabel>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                {defendants.map((defendant) => (
+                  <div key={defendant._id} className="flex items-center space-x-2 p-2 rounded-md border border-neutral-200 dark:border-accent bg-neutral-50 dark:bg-accent/10 opacity-80">
+                    <Checkbox
+                      id={defendant._id}
+                      checked={true}
+                      disabled={true}
+                    />
+                    <label
+                      htmlFor={defendant._id}
+                      className="text-sm font-medium leading-none cursor-default"
+                    >
                       {defendant.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </label>
+                  </div>
+                ))}
+              </div>
               {fieldState.error && (
-                <p className="text-sm text-red-500">{fieldState.error.message}</p>
+                <p className="text-sm text-red-500 mt-1">{fieldState.error.message}</p>
               )}
-              <FieldDescription>
-                Selected: {field.value.map(id => defendants.find(d => d._id === id)?.name).join(", ") || "None"}
-              </FieldDescription>
             </Field>
           )}
         />

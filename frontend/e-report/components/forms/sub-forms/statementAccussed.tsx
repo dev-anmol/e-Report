@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { createStatementAccused } from "@/lib/actions/createStatementAccussed";
 
 const statementAccusedSchema = z.object({
-    personId: z.string().min(1, "Select accused person"),
+    personId: z.string().min(1, "Select person"),
     statement: z.string().min(20, "Statement must be at least 20 characters"),
 });
 
@@ -19,21 +19,31 @@ type FormValues = z.infer<typeof statementAccusedSchema>;
 
 interface StatementAccusedFormProps {
     caseId: string;
-    defendants: Array<{ _id: string; name: string }>;
+    applicants: Array<{ _id: string; name: string }>;
 }
 
-export default function StatementAccusedForm({ caseId, defendants }: StatementAccusedFormProps) {
+export default function StatementAccusedForm({ caseId, applicants }: StatementAccusedFormProps) {
     const [isPending, startTransition] = useTransition();
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+    // Complainant is the first applicant
+    const primaryApplicant = applicants[0];
+
     const form = useForm<FormValues>({
         resolver: zodResolver(statementAccusedSchema),
         defaultValues: {
-            personId: "",
+            personId: primaryApplicant?._id || "",
             statement: "",
         },
     });
+
+    // Handle initial selection if applicant loads late
+    useEffect(() => {
+        if (primaryApplicant?._id && !form.getValues("personId")) {
+            form.setValue("personId", primaryApplicant._id);
+        }
+    }, [primaryApplicant, form]);
 
     const onSubmit = async (values: FormValues) => {
         setSuccessMessage(null);
@@ -53,8 +63,11 @@ export default function StatementAccusedForm({ caseId, defendants }: StatementAc
                 });
 
                 if (result.success) {
-                    setSuccessMessage("Accused statement recorded successfully!");
-                    form.reset();
+                    setSuccessMessage("Complainant statement recorded successfully!");
+                    form.reset({
+                        personId: primaryApplicant?._id || "",
+                        statement: "",
+                    });
                     setTimeout(() => setSuccessMessage(null), 3000);
                 } else {
                     setErrorMessage(result.error || "Failed to record statement");
@@ -84,21 +97,14 @@ export default function StatementAccusedForm({ caseId, defendants }: StatementAc
                     name="personId"
                     render={({ field, fieldState }) => (
                         <Field>
-                            <FieldLabel>Select Accused *</FieldLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select accused person" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {defendants.map((defendant) => (
-                                        <SelectItem key={defendant._id} value={defendant._id}>
-                                            {defendant.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <FieldLabel>Statement From (Applicant) *</FieldLabel>
+                            <div className="p-3 bg-neutral-50 dark:bg-accent/10 rounded-md border border-neutral-200 dark:border-accent flex items-center justify-between opacity-80">
+                                <span className="text-sm font-medium">{primaryApplicant?.name || "No applicant assigned"}</span>
+                                <input type="hidden" {...field} />
+                                <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Applicant</span>
+                            </div>
                             {fieldState.error && (
-                                <p className="text-sm text-red-500">{fieldState.error.message}</p>
+                                <p className="text-sm text-red-500 mt-1">{fieldState.error.message}</p>
                             )}
                         </Field>
                     )}

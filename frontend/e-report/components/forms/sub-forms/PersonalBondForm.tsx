@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { createPersonalBond } from "@/lib/actions/createPersonalBond";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const personalBond125Schema = z.object({
-  accusedPersonIds: z.array(z.string()).min(1, "Select at least one accused"),
+  personIds: z.array(z.string()).min(1, "Select at least one defendant"),
   bondAmount: z.string().min(1, "Bond amount is required"),
   durationMonths: z.string().min(1, "Duration is required"),
 });
@@ -21,10 +22,11 @@ type FormValues = z.infer<typeof personalBond125Schema>;
 
 interface PersonalBond125FormProps {
   caseId: string;
+  applicants: Array<{ _id: string; name: string }>;
   defendants: Array<{ _id: string; name: string }>;
 }
 
-export default function PersonalBond125Form({ caseId, defendants }: PersonalBond125FormProps) {
+export default function PersonalBond125Form({ caseId, applicants, defendants }: PersonalBond125FormProps) {
   const [isPending, startTransition] = useTransition();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -32,11 +34,16 @@ export default function PersonalBond125Form({ caseId, defendants }: PersonalBond
   const form = useForm<FormValues>({
     resolver: zodResolver(personalBond125Schema),
     defaultValues: {
-      accusedPersonIds: [],
+      personIds: defendants.map(d => d._id),
       bondAmount: "",
       durationMonths: "",
     },
   });
+
+  // Sync personIds if defendants change
+  useEffect(() => {
+    form.setValue("personIds", defendants.map(d => d._id));
+  }, [defendants, form]);
 
   const onSubmit = async (values: FormValues) => {
     setSuccessMessage(null);
@@ -49,7 +56,7 @@ export default function PersonalBond125Form({ caseId, defendants }: PersonalBond
           formType: "PERSONAL_BOND_125",
           content: {
             mr: {
-              accusedPersonIds: values.accusedPersonIds,
+              personIds: values.personIds,
               bond: {
                 amount: parseInt(values.bondAmount),
                 durationMonths: parseInt(values.durationMonths),
@@ -60,7 +67,11 @@ export default function PersonalBond125Form({ caseId, defendants }: PersonalBond
 
         if (result.success) {
           setSuccessMessage("Personal Bond 125 created successfully!");
-          form.reset();
+          form.reset({
+            ...form.getValues(),
+            bondAmount: "",
+            durationMonths: "",
+          });
           setTimeout(() => setSuccessMessage(null), 3000);
         } else {
           setErrorMessage(result.error || "Failed to create bond");
@@ -87,40 +98,30 @@ export default function PersonalBond125Form({ caseId, defendants }: PersonalBond
       <FieldGroup>
         <Controller
           control={form.control}
-          name="accusedPersonIds"
+          name="personIds"
           render={({ field, fieldState }) => (
             <Field>
-              <FieldLabel>Select Accused *</FieldLabel>
-              <Select
-                value={field.value[0] || ""}
-                onValueChange={(value) => {
-                  const newValues = field.value.includes(value)
-                    ? field.value.filter(id => id !== value)
-                    : [...field.value, value];
-                  field.onChange(newValues);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select accused persons">
-                    {field.value.length > 0
-                      ? `${field.value.length} accused selected`
-                      : "Select accused persons"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {defendants.map((defendant) => (
-                    <SelectItem key={defendant._id} value={defendant._id}>
+              <FieldLabel>Bond Issued For (All Defendants) *</FieldLabel>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                {defendants.map((defendant) => (
+                  <div key={defendant._id} className="flex items-center space-x-2 p-2 rounded-md border border-neutral-200 dark:border-accent bg-neutral-50 dark:bg-accent/10 opacity-80">
+                    <Checkbox
+                      id={`pb-${defendant._id}`}
+                      checked={true}
+                      disabled={true}
+                    />
+                    <label
+                      htmlFor={`pb-${defendant._id}`}
+                      className="text-sm font-medium leading-none cursor-default"
+                    >
                       {defendant.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </label>
+                  </div>
+                ))}
+              </div>
               {fieldState.error && (
-                <p className="text-sm text-red-500">{fieldState.error.message}</p>
+                <p className="text-sm text-red-500 mt-1">{fieldState.error.message}</p>
               )}
-              <FieldDescription>
-                Selected: {field.value.map(id => defendants.find(d => d._id === id)?.name).join(", ") || "None"}
-              </FieldDescription>
             </Field>
           )}
         />

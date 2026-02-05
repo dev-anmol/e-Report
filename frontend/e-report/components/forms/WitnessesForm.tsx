@@ -24,7 +24,9 @@ type FormValues = Omit<SectionOneWitenessValues, 'witnesses'> & {
     witnesses: Array<Omit<SectionOneWitenessValues['witnesses'][number], 'photo' | 'signature' | 'document'>>;
 };
 
-export default function WitnessesForm({ caseId }: { caseId: string }) {
+import { Person } from "@/lib/actions/cases";
+
+export default function WitnessesForm({ caseId, existingWitnesses }: { caseId: string, existingWitnesses?: Person[] }) {
     // Debug caseId
     useEffect(() => {
         console.log("WitnessesForm mounted with caseId:", caseId);
@@ -58,6 +60,34 @@ export default function WitnessesForm({ caseId }: { caseId: string }) {
         control: form.control,
         name: "witnesses",
     });
+
+    useEffect(() => {
+        if (existingWitnesses && existingWitnesses.length > 0) {
+            console.log("Prefilling witnesses form with:", existingWitnesses);
+
+            const formattedWitnesses = existingWitnesses.map(w => ({
+                Name: w.name,
+                age: w.age?.toString() || "",
+                gender: (w.gender === "M" ? "MALE" : w.gender === "F" ? "FEMALE" : "OTHER") as any,
+                mobile: w.mobile || "",
+                address: w.address || "",
+                role: "WITNESS" as const
+            }));
+
+            // Reset form with existing data
+            form.reset({
+                caseId,
+                witnesses: formattedWitnesses
+            });
+
+            // Mark all existing as submitted
+            const submittedState: Record<number, boolean> = {};
+            existingWitnesses.forEach((_, index) => {
+                submittedState[index] = true;
+            });
+            setSubmittedWitnesses(submittedState);
+        }
+    }, [existingWitnesses, caseId, form]);
 
     // Update caseId if it changes
     useEffect(() => {

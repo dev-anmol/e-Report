@@ -24,7 +24,9 @@ type FormValues = Omit<SectionOneDefendantsValues, 'defendants'> & {
     defendants: Array<Omit<SectionOneDefendantsValues['defendants'][number], 'photo' | 'signature' | 'document'>>;
 };
 
-export default function DefendantsForm({ caseId }: { caseId: string }) {
+import { Person } from "@/lib/actions/cases";
+
+export default function DefendantsForm({ caseId, existingDefendants }: { caseId: string, existingDefendants?: Person[] }) {
     // Debug caseId
     useEffect(() => {
         console.log("DefendantsForm mounted with caseId:", caseId);
@@ -58,6 +60,34 @@ export default function DefendantsForm({ caseId }: { caseId: string }) {
         control: form.control,
         name: "defendants",
     });
+
+    useEffect(() => {
+        if (existingDefendants && existingDefendants.length > 0) {
+            console.log("Prefilling defendants form with:", existingDefendants);
+
+            const formattedDefendants = existingDefendants.map(d => ({
+                Name: d.name,
+                age: d.age?.toString() || "",
+                gender: (d.gender === "M" ? "MALE" : d.gender === "F" ? "FEMALE" : "OTHER") as any,
+                mobile: d.mobile || "",
+                address: d.address || "",
+                role: "DEFENDANT" as const
+            }));
+
+            // Reset form with existing data
+            form.reset({
+                caseId,
+                defendants: formattedDefendants
+            });
+
+            // Mark all existing as submitted
+            const submittedState: Record<number, boolean> = {};
+            existingDefendants.forEach((_, index) => {
+                submittedState[index] = true;
+            });
+            setSubmittedDefendants(submittedState);
+        }
+    }, [existingDefendants, caseId, form]);
 
     // Update caseId if it changes
     useEffect(() => {

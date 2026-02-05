@@ -7,7 +7,7 @@ interface NoticeFormData {
   formType: "NOTICE_130";
   content: {
     mr: {
-      accusedPersonIds: string[];
+      personIds: string[];
       facts: string;
       hearing: {
         date: string;

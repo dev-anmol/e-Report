@@ -10,7 +10,7 @@ interface PersonalBondData {
     formType: "PERSONAL_BOND_125";
     content: {
         mr: {
-            accusedPersonIds: string[];
+            personIds: string[];
             bond: {
                 amount: number;
                 durationMonths: number;

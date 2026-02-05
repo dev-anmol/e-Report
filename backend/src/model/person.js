@@ -4,7 +4,7 @@ const PersonSchema = new mongoose.Schema(
   {
     caseId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "case",
+      ref: "Case",
       required: true,
       index: true
     },
