@@ -21,9 +21,11 @@ interface StatementWitnessFormProps {
     caseId: string;
     applicants: Array<{ _id: string; name: string }>;
     witnesses: Array<{ _id: string; name: string }>;
+    initialData?: any;
+    onSuccess?: () => void;
 }
 
-export function StatementWitnessForm({ caseId, applicants, witnesses }: StatementWitnessFormProps) {
+export function StatementWitnessForm({ caseId, applicants, witnesses, initialData, onSuccess }: StatementWitnessFormProps) {
     const [isPending, startTransition] = useTransition();
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -45,12 +47,23 @@ export function StatementWitnessForm({ caseId, applicants, witnesses }: Statemen
         },
     });
 
-    // Handle initial selection if only one selectable person
+    // Prefill form if initialData is provided
     useEffect(() => {
-        if (selectablePersons.length === 1 && !form.getValues("personId")) {
+        if (initialData?.content?.mr) {
+            const { personId, statement } = initialData.content.mr;
+            form.reset({
+                personId: personId || "",
+                statement: statement || "",
+            });
+        }
+    }, [initialData, form]);
+
+    // Handle initial selection if only one selectable person (only if not prefilled)
+    useEffect(() => {
+        if (!initialData && selectablePersons.length === 1 && !form.getValues("personId")) {
             form.setValue("personId", selectablePersons[0]._id);
         }
-    }, [selectablePersons, form]);
+    }, [selectablePersons, form, initialData]);
 
     const onSubmit = async (values: WitnessFormValues) => {
         setSuccessMessage(null);
@@ -71,6 +84,7 @@ export function StatementWitnessForm({ caseId, applicants, witnesses }: Statemen
 
                 if (result.success) {
                     setSuccessMessage("Statement recorded successfully!");
+                    if (onSuccess) onSuccess();
                     form.reset();
                     setTimeout(() => setSuccessMessage(null), 3000);
                 } else {

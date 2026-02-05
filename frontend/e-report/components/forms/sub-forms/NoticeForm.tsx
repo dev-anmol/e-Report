@@ -26,9 +26,11 @@ interface NoticeFormProps {
   caseId: string;
   applicant?: { _id: string; name: string } | null;
   defendants: Array<{ _id: string; name: string }>;
+  initialData?: any;
+  onSuccess?: () => void;
 }
 
-export default function Notice130Form({ caseId, applicant, defendants }: NoticeFormProps) {
+export default function Notice130Form({ caseId, applicant, defendants, initialData, onSuccess }: NoticeFormProps) {
   const [isPending, startTransition] = useTransition();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -44,10 +46,29 @@ export default function Notice130Form({ caseId, applicant, defendants }: NoticeF
     },
   });
 
-  // Sync personIds if defendants change
+  // Prefill form if initialData is provided
   useEffect(() => {
-    form.setValue("personIds", defendants.map(d => d._id));
-  }, [defendants, form]);
+    if (initialData?.content?.mr) {
+      console.log(`Prefilling NoticeForm with:`, initialData.content.mr);
+      const { personIds, facts, hearing } = initialData.content.mr;
+      form.reset({
+        personIds: personIds || defendants.map(d => d._id),
+        facts: facts || "",
+        hearingDate: hearing?.date || "",
+        hearingTime: hearing?.time || "",
+        hearingPlace: hearing?.place || "",
+      });
+    } else if (initialData) {
+      console.log(`NoticeForm received initialData but content.mr is missing:`, initialData);
+    }
+  }, [initialData, defendants, form]);
+
+  // Sync personIds if defendants change (only if not prefilled from initialData)
+  useEffect(() => {
+    if (!initialData) {
+      form.setValue("personIds", defendants.map(d => d._id));
+    }
+  }, [defendants, form, initialData]);
 
   const onSubmit = async (values: FormValues) => {
     setSuccessMessage(null);
@@ -73,6 +94,7 @@ export default function Notice130Form({ caseId, applicant, defendants }: NoticeF
 
         if (result.success) {
           setSuccessMessage("Notice 130 created successfully!");
+          if (onSuccess) onSuccess();
           form.reset({
             ...form.getValues(),
             facts: "",

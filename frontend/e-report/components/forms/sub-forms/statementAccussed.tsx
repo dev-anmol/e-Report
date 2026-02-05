@@ -20,9 +20,11 @@ type FormValues = z.infer<typeof statementAccusedSchema>;
 interface StatementAccusedFormProps {
     caseId: string;
     applicants: Array<{ _id: string; name: string }>;
+    initialData?: any;
+    onSuccess?: () => void;
 }
 
-export default function StatementAccusedForm({ caseId, applicants }: StatementAccusedFormProps) {
+export default function StatementAccusedForm({ caseId, applicants, initialData, onSuccess }: StatementAccusedFormProps) {
     const [isPending, startTransition] = useTransition();
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -38,12 +40,23 @@ export default function StatementAccusedForm({ caseId, applicants }: StatementAc
         },
     });
 
-    // Handle initial selection if applicant loads late
+    // Prefill form if initialData is provided
     useEffect(() => {
-        if (primaryApplicant?._id && !form.getValues("personId")) {
+        if (initialData?.content?.mr) {
+            const { personId, statement } = initialData.content.mr;
+            form.reset({
+                personId: personId || primaryApplicant?._id || "",
+                statement: statement || "",
+            });
+        }
+    }, [initialData, primaryApplicant, form]);
+
+    // Handle initial selection if applicant loads late (only if not prefilled)
+    useEffect(() => {
+        if (!initialData && primaryApplicant?._id && !form.getValues("personId")) {
             form.setValue("personId", primaryApplicant._id);
         }
-    }, [primaryApplicant, form]);
+    }, [primaryApplicant, form, initialData]);
 
     const onSubmit = async (values: FormValues) => {
         setSuccessMessage(null);
@@ -64,6 +77,7 @@ export default function StatementAccusedForm({ caseId, applicants }: StatementAc
 
                 if (result.success) {
                     setSuccessMessage("Complainant statement recorded successfully!");
+                    if (onSuccess) onSuccess();
                     form.reset({
                         personId: primaryApplicant?._id || "",
                         statement: "",

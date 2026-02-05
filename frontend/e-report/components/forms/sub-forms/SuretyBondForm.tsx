@@ -24,9 +24,11 @@ interface SuretyBond126FormProps {
   caseId: string;
   applicants: Array<{ _id: string; name: string }>;
   defendants: Array<{ _id: string; name: string }>;
+  initialData?: any;
+  onSuccess?: () => void;
 }
 
-export function SuretyBond126Form({ caseId, applicants, defendants }: SuretyBond126FormProps) {
+export function SuretyBond126Form({ caseId, applicants, defendants, initialData, onSuccess }: SuretyBond126FormProps) {
   const [isPending, startTransition] = useTransition();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -41,10 +43,25 @@ export function SuretyBond126Form({ caseId, applicants, defendants }: SuretyBond
     },
   });
 
-  // Sync personIds if defendants change
+  // Prefill form if initialData is provided
   useEffect(() => {
-    form.setValue("personIds", defendants.map(d => d._id));
-  }, [defendants, form]);
+    if (initialData?.content?.mr) {
+      const { personIds, bond } = initialData.content.mr;
+      form.reset({
+        personIds: personIds || defendants.map(d => d._id),
+        bondAmount: bond?.amount?.toString() || "",
+        durationMonths: bond?.durationMonths?.toString() || "",
+        suretyCount: bond?.suretyCount?.toString() || "1",
+      });
+    }
+  }, [initialData, defendants, form]);
+
+  // Sync personIds if defendants change (only if not prefilled)
+  useEffect(() => {
+    if (!initialData) {
+      form.setValue("personIds", defendants.map(d => d._id));
+    }
+  }, [defendants, form, initialData]);
 
   const onSubmit = async (values: SuretyFormValues) => {
     setSuccessMessage(null);
@@ -69,6 +86,7 @@ export function SuretyBond126Form({ caseId, applicants, defendants }: SuretyBond
 
         if (result.success) {
           setSuccessMessage("Surety Bond 126 created successfully!");
+          if (onSuccess) onSuccess();
           form.reset({
             ...form.getValues(),
             bondAmount: "",
