@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { createFinalOrder } from "@/lib/actions/createFinalOrder";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -29,9 +29,11 @@ interface FinalOrderFormProps {
     applicants: Array<{ _id: string; name: string }>;
     defendants: Array<{ _id: string; name: string }>;
     witnesses: Array<{ _id: string; name: string }>;
+    initialData?: any;
+    onSuccess?: () => void;
 }
 
-export function FinalOrderForm({ caseId, applicants, defendants, witnesses }: FinalOrderFormProps) {
+export function FinalOrderForm({ caseId, applicants, defendants, witnesses, initialData, onSuccess }: FinalOrderFormProps) {
     const [isPending, startTransition] = useTransition();
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -50,6 +52,24 @@ export function FinalOrderForm({ caseId, applicants, defendants, witnesses }: Fi
             remarks: "",
         },
     });
+
+    // Prefill form if initialData is provided
+    useEffect(() => {
+        if (initialData?.content?.mr) {
+            const { hearingDate, outcomeType, outcome, remarks } = initialData.content.mr;
+            form.reset({
+                hearingDate: hearingDate || "",
+                outcomeType: outcomeType || "BOND_ORDERED",
+                bondAmount: outcome?.bondAmount?.toString() || "",
+                bondDurationMonths: outcome?.bondDurationMonths?.toString() || "",
+                suretyRequired: outcome?.suretyRequired || false,
+                suretyCount: outcome?.suretyCount?.toString() || "1",
+                nextHearingDate: outcome?.nextHearingDate || "",
+                nextHearingPlace: outcome?.nextHearingPlace || "",
+                remarks: remarks || "",
+            });
+        }
+    }, [initialData, form]);
 
     const outcomeType = form.watch("outcomeType");
     const suretyRequired = form.watch("suretyRequired");
@@ -82,6 +102,7 @@ export function FinalOrderForm({ caseId, applicants, defendants, witnesses }: Fi
 
                 if (result.success) {
                     setSuccessMessage("Final order created successfully!");
+                    if (onSuccess) onSuccess();
                     form.reset();
                     setTimeout(() => setSuccessMessage(null), 3000);
                 } else {

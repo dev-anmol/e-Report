@@ -141,7 +141,7 @@ async function getFormsByCase(req, res, next) {
 
     const forms = await Form.find(query)
       .sort({ createdAt: -1 })
-      .select("formType status createdAt")
+      .select("formType status content createdAt")
 
     res.json({ success: true, forms })
   } catch (err) {

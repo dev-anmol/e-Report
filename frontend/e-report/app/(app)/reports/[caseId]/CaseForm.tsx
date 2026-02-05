@@ -36,6 +36,7 @@ interface Form {
   _id: string;
   formType: string;
   status: "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
+  content: any;
   createdAt: string;
 }
 
@@ -156,38 +157,39 @@ export default function CaseForm({ caseId }: CaseFormProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const refreshForms = async () => {
+    try {
+      const formsResult = await getFormsByCaseAction(caseId);
+      if (formsResult.success) {
+        console.log("CaseForm: Refetched forms:", formsResult.data);
+        setForms(formsResult.data as Form[]);
+      }
+    } catch (err) {
+      console.error("Error refreshing forms:", err);
+    }
+  };
+
   // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        // Fetch case data
+        // Fetch case details
         const caseResult = await getCaseByIdAction(caseId);
-        if (caseResult.success && caseResult.data) {
+        if (caseResult.success) {
           setCaseData(caseResult.data as Case);
-        } else {
-          setCaseData(MOCK_CASE);
         }
 
         // Fetch persons
         const personsResult = await getPersonsByCaseAction(caseId);
-        if (personsResult.success && personsResult.data) {
+        if (personsResult.success) {
           setPersons(personsResult.data as Person[]);
-        } else {
-          setPersons([]);
         }
 
         // Fetch forms
-        const formsResult = await getFormsByCaseAction(caseId);
-        if (formsResult.success) {
-          setForms(formsResult.data as Form[]);
-        }
+        await refreshForms();
       } catch (err) {
-        console.error("Error fetching case data:", err);
-        setError(err instanceof Error ? err.message : "Failed to load case data");
-        setCaseData(MOCK_CASE);
-        setPersons([]);
+        setError(err instanceof Error ? err.message : "Failed to load data");
       } finally {
         setLoading(false);
       }
@@ -354,6 +356,8 @@ export default function CaseForm({ caseId }: CaseFormProps) {
                 applicants={persons.filter(p => p.role === "APPLICANT").map(p => ({ _id: p._id, name: p.name }))}
                 defendants={defendants.map(d => ({ _id: d._id, name: d.name }))}
                 witnesses={witnesses.map(w => ({ _id: w._id, name: w.name }))}
+                existingForms={forms}
+                onSuccess={refreshForms}
               />
             </div>
           </ExpandableSection>

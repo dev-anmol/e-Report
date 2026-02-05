@@ -15,9 +15,11 @@ interface FormsSectionProps {
     applicants: Array<{ _id: string; name: string }>;
     defendants: Array<{ _id: string; name: string }>;
     witnesses: Array<{ _id: string; name: string }>;
+    existingForms?: any[];
+    onSuccess?: () => void;
 }
 
-export default function FormsSection({ caseId, applicants, defendants, witnesses }: FormsSectionProps) {
+export default function FormsSection({ caseId, applicants, defendants, witnesses, existingForms = [], onSuccess }: FormsSectionProps) {
     const [activeTab, setActiveTab] = useState("notice-130");
 
     const formTabs = [
@@ -26,42 +28,48 @@ export default function FormsSection({ caseId, applicants, defendants, witnesses
             label: "Notice 130",
             icon: Bell,
             component: NoticeForm,
-            description: "Issue notice to accused"
+            description: "Issue notice to accused",
+            formType: "NOTICE_130"
         },
         {
             id: "personal-bond-125",
             label: "Personal Bond 125",
             icon: Shield,
             component: PersonalBondForm,
-            description: "Personal bond order"
+            description: "Personal bond order",
+            formType: "PERSONAL_BOND_125"
         },
         {
             id: "surety-bond-126",
             label: "Surety Bond 126",
             icon: Users,
             component: SuretyBond126Form,
-            description: "Surety bond order"
+            description: "Surety bond order",
+            formType: "SURETY_BOND_126"
         },
         {
             id: "statement-accused",
             label: "Accused Statement",
             icon: FileText,
             component: StatementAccusedForm,
-            description: "Record accused statement"
+            description: "Record accused statement",
+            formType: "STATEMENT_ACCUSED"
         },
         {
             id: "statement-witness",
             label: "Witness Statement",
             icon: FileCheck,
             component: StatementWitnessForm,
-            description: "Record witness statement"
+            description: "Record witness statement",
+            formType: "STATEMENT_WITNESS"
         },
         {
             id: "final-order",
             label: "Final Order",
             icon: Gavel,
             component: FinalOrderForm,
-            description: "Issue final order"
+            description: "Issue final order",
+            formType: "FINAL_ORDER"
         }
     ];
 
@@ -82,7 +90,13 @@ export default function FormsSection({ caseId, applicants, defendants, witnesses
                 </TabsList>
 
                 {formTabs.map((tab) => {
-                    const FormComponent = tab.component;
+                    const FormComponent: any = tab.component;
+                    const initialData = existingForms.find(f => f.formType === tab.formType);
+
+                    if (initialData) {
+                        console.log(`Found existing form for ${tab.label}:`, initialData);
+                    }
+
                     return (
                         <TabsContent key={tab.id} value={tab.id} className="mt-20">
                             <div className="mb-4">
@@ -97,8 +111,11 @@ export default function FormsSection({ caseId, applicants, defendants, witnesses
                             <FormComponent
                                 caseId={caseId}
                                 applicants={applicants}
+                                applicant={applicants[0]}
                                 defendants={defendants}
                                 witnesses={witnesses}
+                                initialData={initialData}
+                                onSuccess={onSuccess}
                             />
                         </TabsContent>
                     );

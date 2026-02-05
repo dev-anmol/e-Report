@@ -24,9 +24,11 @@ interface PersonalBond125FormProps {
   caseId: string;
   applicants: Array<{ _id: string; name: string }>;
   defendants: Array<{ _id: string; name: string }>;
+  initialData?: any;
+  onSuccess?: () => void;
 }
 
-export default function PersonalBond125Form({ caseId, applicants, defendants }: PersonalBond125FormProps) {
+export default function PersonalBond125Form({ caseId, applicants, defendants, initialData, onSuccess }: PersonalBond125FormProps) {
   const [isPending, startTransition] = useTransition();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -40,10 +42,29 @@ export default function PersonalBond125Form({ caseId, applicants, defendants }: 
     },
   });
 
-  // Sync personIds if defendants change
+  // Prefill form if initialData is provided
   useEffect(() => {
-    form.setValue("personIds", defendants.map(d => d._id));
-  }, [defendants, form]);
+    console.log("PersonalBond125Form: useEffect triggered", { initialData, defendantsCount: defendants.length });
+    if (initialData?.content?.mr) {
+      console.log("PersonalBond125Form: Prefilling with data:", initialData.content.mr);
+      const { personIds, bond } = initialData.content.mr;
+      form.reset({
+        personIds: personIds || defendants.map(d => d._id),
+        bondAmount: bond?.amount?.toString() || "",
+        durationMonths: bond?.durationMonths?.toString() || "",
+      });
+      console.log("PersonalBond125Form: Form reset completed");
+    } else if (initialData) {
+      console.log("PersonalBond125Form: initialData present but content.mr missing", initialData);
+    }
+  }, [initialData, defendants, form]);
+
+  // Sync personIds if defendants change (only if not prefilled)
+  useEffect(() => {
+    if (!initialData) {
+      form.setValue("personIds", defendants.map(d => d._id));
+    }
+  }, [defendants, form, initialData]);
 
   const onSubmit = async (values: FormValues) => {
     setSuccessMessage(null);
@@ -67,6 +88,7 @@ export default function PersonalBond125Form({ caseId, applicants, defendants }: 
 
         if (result.success) {
           setSuccessMessage("Personal Bond 125 created successfully!");
+          if (onSuccess) onSuccess();
           form.reset({
             ...form.getValues(),
             bondAmount: "",
