@@ -1,14 +1,27 @@
 // src/controller/personController.js
+const mongoose = require("mongoose");
 const Person = require("../model/person");
 const Case = require("../model/case");
 const { uploadFile, deleteFile } = require("../service/fileUploadService");
 
 async function createPerson(req, res, next) {
   try {
-    const { caseId } = req.params;
-    const { name, role, address, age, gender, mobile } = req.body;
+    const { caseId: paramCaseId } = req.params;
+    const { name, role, address, age, gender, mobile, caseId: bodyCaseId } = req.body;
+
+    const caseIdStr = paramCaseId || bodyCaseId;
 
     console.log("=== createPerson Debug ===");
+    console.log("CaseID (Param):", paramCaseId);
+    console.log("CaseID (Body):", bodyCaseId);
+    console.log("Final CaseID String:", caseIdStr);
+
+    if (!caseIdStr || !mongoose.Types.ObjectId.isValid(caseIdStr)) {
+      console.error("Invalid or missing Case ID:", caseIdStr);
+      return res.status(400).json({ message: "Invalid or missing Case ID" });
+    }
+
+    const caseId = new mongoose.Types.ObjectId(caseIdStr);
     console.log("Body:", { name, role, address, age, gender, mobile });
     console.log("req.files:", req.files);
     console.log("req.files keys:", req.files ? Object.keys(req.files) : "none");
@@ -44,9 +57,9 @@ async function createPerson(req, res, next) {
           file.mimetype === "application/pdf"
             ? "pdf"
             : file.mimetype.split("/")[1] || "bin";
-    
+
         const path = `persons/${folder}/${person._id}.${ext}`;
-    
+
         console.log(`Uploading ${folder}:`, path);
         await uploadFile({
           buffer: file.buffer,
@@ -170,4 +183,22 @@ async function deletePerson(req, res, next) {
   }
 }
 
-module.exports = { createPerson, updatePerson, deletePerson };
+async function getPersonsByCase(req, res, next) {
+  try {
+    const { caseId } = req.params;
+    console.log(`=== getPersonsByCase Debug - CaseId: ${caseId} ===`);
+
+    const persons = await Person.find({ caseId }).sort({ createdAt: 1 });
+    console.log(`Found ${persons.length} persons for case ${caseId}`);
+
+    return res.json({
+      success: true,
+      persons,
+    });
+  } catch (err) {
+    console.error("Error in getPersonsByCase:", err);
+    next(err);
+  }
+}
+
+module.exports = { createPerson, updatePerson, deletePerson, getPersonsByCase };

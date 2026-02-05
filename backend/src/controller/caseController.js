@@ -49,7 +49,7 @@ async function getMyCases(req, res, next) {
       officerId: req.user.id
     })
       .sort({ createdAt: -1 })
-      .select("branchCaseNumber sections status language createdAt")
+      .select("branchCaseNumber policeStationCaseNumber sections status language createdAt")
 
     res.json({
       success: true,
