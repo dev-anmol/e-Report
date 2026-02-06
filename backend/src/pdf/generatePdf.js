@@ -1,77 +1,74 @@
-// pdf/generatePdf.js
-const PDFDocument = require("pdfkit")
-const fs = require("fs")
 const path = require("path")
+const fs = require("fs-extra")
 const crypto = require("crypto")
-
-const FONT_PATH = path.resolve(
-  __dirname,
-  "../assets/fonts/NotoSansDevanagari-Regular.ttf"
-)
-
-function loadTemplate(type, version) {
-  const base = path.join(
-    __dirname,
-    "templates",
-    type.toLowerCase().replace(/_/g, "-"),
-    version
-  )
-
-  return {
-    meta: require(path.join(base, "meta.json")),
-    text: require(path.join(base, "text.mr.json")),
-    render: require(path.join(base, "layout.js")).render
-  }
-}
+const puppeteerService = require("./puppeteerService")
 
 /**
- * mode: "DRAFT" | "ISSUED"
+ * mode: "DRAFT" | "ISSUED" | "PREVIEW"
  */
 async function generatePdf({ pages, outputPath, mode = "DRAFT" }) {
-  return new Promise((resolve, reject) => {
-    try {
-      const doc = new PDFDocument({ size: "A4", margin: 50 })
+  const commonCss = await fs.readFile(
+    path.join(__dirname, "html-templates", "base.css"),
+    "utf-8"
+  )
 
-      const dir = path.dirname(outputPath)
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+  const logoPath = "file://" + path.resolve(process.cwd(), "src/assets/logos/MHlogo.png")
 
-      const stream = fs.createWriteStream(outputPath)
-      doc.pipe(stream)
+  const puppeteerPages = pages.map((page) => {
+    const templateName = page.type.toLowerCase().replace(/_/g, "-")
+    const templatePath = path.join(__dirname, "html-templates", `${templateName}.hbs`)
 
-      // Load Marathi font ONCE
-      doc.font(FONT_PATH)
+    // Prepare data based on template requirements
+    // We might need some mapping here if data structure changed
+    const data = {
+      ...page.data,
+      commonCss,
+      logoPath,
+      currentDate: new Date().toLocaleDateString("mr-IN")
+    }
 
-      pages.forEach((page, index) => {
-        if (index > 0) doc.addPage()
+    // Fix absolute paths for signatures if they exist
+    if (data.accused?.signature) {
+      data.accused.signature = "file://" + path.resolve(process.cwd(), data.accused.signature)
+    }
+    if (data.surety?.signature) {
+      data.surety.signature = "file://" + path.resolve(process.cwd(), data.surety.signature)
+    }
+    if (data.entries) {
+      data.entries = data.entries.map(entry => ({
+        ...entry,
+        presentAccused: entry.presentAccused?.map(p => ({
+          ...p,
+          signature: p.signature ? "file://" + path.resolve(process.cwd(), p.signature) : null
+        }))
+      }))
+    }
 
-        const template = loadTemplate(page.type, page.version)
-        template.render(doc, page.data, template.text)
-      })
-
-      doc.end()
-
-      stream.on("finish", () => {
-        if (mode === "ISSUED") {
-          const buffer = fs.readFileSync(outputPath)
-          const hash = crypto
-            .createHash("sha256")
-            .update(buffer)
-            .digest("hex")
-
-          return resolve({
-            path: outputPath,
-            hash
-          })
-        }
-
-        resolve({ path: outputPath })
-      })
-
-      stream.on("error", reject)
-    } catch (err) {
-      reject(err)
+    return {
+      templatePath,
+      data
     }
   })
+
+  const result = await puppeteerService.generateMultiPage({
+    pages: puppeteerPages,
+    outputPath
+  })
+
+  if (mode === "ISSUED") {
+    const buffer = await fs.readFile(outputPath)
+    const hash = crypto
+      .createHash("sha256")
+      .update(buffer)
+      .digest("hex")
+
+    return {
+      path: outputPath,
+      hash
+    }
+  }
+
+  return { path: outputPath }
 }
 
 module.exports = {

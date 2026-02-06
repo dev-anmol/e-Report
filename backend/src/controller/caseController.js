@@ -45,9 +45,14 @@ async function createCase(req, res, next) {
 
 async function getMyCases(req, res, next) {
   try {
-    const cases = await Case.find({
-      officerId: req.user.id
-    })
+    const query = {}
+
+    // Officers see only their cases, Admins see all
+    if (req.user.role !== "ADMIN") {
+      query.officerId = req.user.id
+    }
+
+    const cases = await Case.find(query)
       .sort({ createdAt: -1 })
       .select("branchCaseNumber policeStationCaseNumber sections status language createdAt")
 
@@ -64,10 +69,14 @@ async function getCaseById(req, res, next) {
   try {
     const { caseId } = req.params
 
-    const caseData = await Case.findOne({
-      _id: caseId,
-      officerId: req.user.id
-    }).populate("policeStationId", "name")
+    const query = { _id: caseId }
+
+    // Officers see only their cases, Admins see all
+    if (req.user.role !== "ADMIN") {
+      query.officerId = req.user.id
+    }
+
+    const caseData = await Case.findOne(query).populate("policeStationId", "name")
 
     if (!caseData) {
       return res.status(404).json({ message: "Case not found" })
@@ -81,6 +90,7 @@ async function getCaseById(req, res, next) {
     next(err)
   }
 }
+
 
 module.exports = {
   createCase,

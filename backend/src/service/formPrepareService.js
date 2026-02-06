@@ -4,83 +4,75 @@ const Form = require("../model/form")
 const PoliceStation = require("../model/policeStation")
 
 async function prepareInterimBond125126Data(form, caseData) {
-    const content = form.content.mr
+  const content = form.content.mr
 
-    // 1. Fetch accused persons
-    const accusedPersons = await Person.find({
-        _id: { $in: content.accusedPersonIds },
-        caseId: form.caseId,
-        role: "DEFENDANT"
-    })
+  // 1. Fetch accused persons
+  const accusedPersons = await Person.find({
+    _id: { $in: content.accusedPersonIds },
+    caseId: form.caseId,
+    role: "DEFENDANT"
+  })
 
-    if (!accusedPersons.length) {
-        throw new Error("No valid defendants found for bond")
+  // 1.5 Fetch sureties if present
+  const suretyIds = content.sureties?.map(s => s.personId).filter(Boolean) || []
+  const suretyPersons = await Person.find({ _id: { $in: suretyIds } })
+
+  if (!accusedPersons.length) {
+    throw new Error("No valid defendants found for bond")
+  }
+
+  // 2. Build one page per accused
+  return accusedPersons.map(accused => {
+    // Find matching surety for this accused if any (assuming simple mapping for now)
+    const suretyData = content.sureties?.find(s => s.accusedId === String(accused._id))
+    const suretyPerson = suretyPersons.find(p => String(p._id) === suretyData?.personId)
+
+    return {
+      policeStationName: caseData.policeStationName || "—",
+      caseNumber: caseData.branchCaseNumber,
+      accused: {
+        name: accused.name,
+        address: accused.address,
+        age: accused.age,
+        signature: accused.files?.signature
+      },
+      amount: content.bond?.amount || "—",
+      surety: suretyPerson ? {
+        name: suretyPerson.name,
+        address: suretyPerson.address,
+        signature: suretyPerson.files?.signature
+      } : null
     }
-
-    // 2. Build one page per accused
-    return accusedPersons.map(accused => ({
-        accused: {
-            name: accused.name,
-            address: accused.address,
-            age: accused.age
-        },
-
-        bond: {
-            amount: content.bond.amount,
-            durationMonths: content.bond.durationMonths,
-            condition: content.bond.condition
-        },
-
-        validity: content.validity,
-
-        executionDate: content.executionDate,
-
-        sureties: content.sureties || [],
-
-        officer: {
-            designation: "विशेष कार्यकारी दंडाधिकारी",
-            office: caseData.officeName
-        }
-    }))
+  })
 }
 
 async function prepareNotice130Data(form, caseData) {
-    // 1. Fetch persons by IDs
-    const persons = await Person.find({
-        _id: { $in: form.content.mr.accusedPersonIds },
-        caseId: form.caseId,
-        role: "DEFENDANT"
-    })
+  const content = form.content.mr
 
-    if (!persons.length) {
-        throw new Error("No valid defendants found")
+  // 1. Fetch persons by IDs
+  const persons = await Person.find({
+    _id: { $in: content.accusedPersonIds },
+    caseId: form.caseId,
+    role: "DEFENDANT"
+  })
+
+  if (!persons.length) {
+    throw new Error("No valid defendants found")
+  }
+
+  // 2. Build one page per accused
+  return persons.map(p => ({
+    branchChapterCaseNo: caseData.branchCaseNumber,
+    policeChapterCaseNo: caseData.policeStationCaseNumber,
+    policeStationName: caseData.policeStationName,
+    sections: caseData.sections?.join(", ") || "",
+    hearingDate: content.hearing?.date || "—",
+    accused: {
+      name: p.name,
+      address: p.address,
+      signature: p.files?.signature
     }
-
-    // 2. Map to printable structure
-    const accusedPersons = persons.map(p => ({
-        name: p.name,
-        address: p.address
-    }))
-
-    // 3. Build final data object for template
-    return {
-        caseNumber: caseData.branchCaseNumber,
-        caseDate: new Date().toLocaleDateString("mr-IN"),
-
-        policeStationName: caseData.policeStationName,
-
-        accusedPersons,
-
-        facts: form.content.mr.facts,
-        bond: form.content.mr.bond,
-        hearing: form.content.mr.hearing,
-
-        officer: {
-            name: caseData.officerName,
-            designation: caseData.officerDesignation,
-            office: caseData.officeName
-        }
-    }
+  }))
 }
 
 async function prepareAccusedStatementData(form, caseData) {
@@ -90,7 +82,6 @@ async function prepareAccusedStatementData(form, caseData) {
     throw new Error("accusedPersonIds are required for STATEMENT_ACCUSED")
   }
 
-  // 1. Fetch accused persons
   const accusedPersons = await Person.find({
     _id: { $in: content.accusedPersonIds },
     caseId: form.caseId,
@@ -101,30 +92,17 @@ async function prepareAccusedStatementData(form, caseData) {
     throw new Error("No valid defendants found for statement")
   }
 
-  // 2. Build one page per accused
   return accusedPersons.map(accused => ({
+    policeStationName: caseData.policeStationName,
     accused: {
       name: accused.name,
-      address: accused.address,
       age: accused.age,
-      education: accused.education,
-      occupation: accused.occupation
+      address: accused.address,
+      occupation: accused.occupation || "—",
+      signature: accused.files?.signature
     },
-
-    answers: {
-      noticeReceived: !!content.answers.noticeReceived,
-      understandsNotice: !!content.answers.understandsNotice,
-      agreesToMaintainPeace: !!content.answers.agreesToMaintainPeace
-    },
-
-    statementDate: content.statementDate,
-
-    place: caseData.officeName || "—",
-
-    officer: {
-      designation: "विशेष कार्यकारी दंडाधिकारी",
-      office: caseData.officeName
-    }
+    answer1: content.answers?.q1 || "—",
+    answer2: content.answers?.q2 || "—"
   }))
 }
 
@@ -135,7 +113,6 @@ async function prepareAccusedBondTimeRequestData(form, caseData) {
     throw new Error("accusedPersonIds required for ACCUSED_BOND_TIME_REQUEST")
   }
 
-  // Fetch accused persons
   const accusedPersons = await Person.find({
     _id: { $in: content.accusedPersonIds },
     caseId: form.caseId,
@@ -146,16 +123,15 @@ async function prepareAccusedBondTimeRequestData(form, caseData) {
     throw new Error("No valid accused found for bond time request")
   }
 
-  // One page per accused
   return accusedPersons.map(accused => ({
+    policeStationName: caseData.policeStationName,
+    caseNumber: caseData.branchCaseNumber,
     accused: {
       name: accused.name,
-      address: accused.address
+      address: accused.address,
+      signature: accused.files?.signature
     },
-
-    applicationDate: content.applicationDate,
-
-    place: caseData.officeName || "—"
+    requestedDays: content.requestedDays || "—"
   }))
 }
 
@@ -201,46 +177,80 @@ async function generateCaseRoznamaPage(caseId) {
         ? new Date(entry.nextDate).toLocaleDateString("mr-IN")
         : "-",
       presentAccused: presentAccused.map(p => ({
-        name: p.name
+        name: p.name,
+        signature: p.files?.signature
       }))
     }
   })
 
-  // 6️⃣ FINAL PAGE DATA (what layout.js expects)
+  // 6️⃣ FINAL PAGE DATA (what layout.hbs expects)
   return {
-    caseInfo: {
-      branchCaseNumber: caseData.branchCaseNumber,
-      policeCaseNumber: caseData.policeStationCaseNumber,
-
-      policeStation: policeStation.name,
-      policeStationCode: policeStation.code,
-
-      sections: caseData.sections,
-
-      complainant: complainant
-        ? {
-            name: complainant.name,
-            address: complainant.address
-          }
-        : null,
-
-      defendants: allDefendants.map(d => ({
-        name: d.name
-      }))
+    header: {
+      branchChapterCaseNo: caseData.branchCaseNumber,
+      policeChapterCaseNo: caseData.policeStationCaseNumber,
+      policeStationName: policeStation.name,
+      sections: caseData.sections?.join(", "),
+      applicant: complainant?.name || "—",
+      defendants: allDefendants.map(d => d.name).join(", ")
     },
-
-    entries,
-
-    officer: {
-      office: policeStation.district
-    }
+    entries
   }
 }
 
+async function prepareSuretyBond126Data(form, caseData) {
+  const content = form.content.mr
+  const suretyIds = content.suretyPersonIds || []
+  const sureties = await Person.find({ _id: { $in: suretyIds } })
+
+  return sureties.map(surety => ({
+    policeStationName: caseData.policeStationName,
+    caseNumber: caseData.branchCaseNumber,
+    surety: {
+      name: surety.name,
+      address: surety.address,
+      signature: surety.files?.signature
+    },
+    amount: content.amount || "—",
+    accusedName: content.accusedName || "—"
+  }))
+}
+
+async function prepareStatementWitnessData(form, caseData) {
+  const content = form.content.mr
+  const witnessIds = content.witnessPersonIds || []
+  const witnesses = await Person.find({ _id: { $in: witnessIds } })
+
+  return witnesses.map(witness => ({
+    policeStationName: caseData.policeStationName,
+    witness: {
+      name: witness.name,
+      age: witness.age,
+      address: witness.address,
+      occupation: witness.occupation || "—",
+      signature: witness.files?.signature
+    },
+    statement: content.statement || "—"
+  }))
+}
+
+async function prepareFinalOrderData(form, caseData) {
+  const content = form.content.mr
+  return [{
+    policeStationName: caseData.policeStationName,
+    caseNumber: caseData.branchCaseNumber,
+    sections: caseData.sections?.join(", "),
+    orderDate: content.orderDate || new Date().toLocaleDateString("mr-IN"),
+    orderText: content.orderText || "—"
+  }]
+}
+
 module.exports = {
-    generateCaseRoznamaPage,
-    prepareInterimBond125126Data,
-    prepareNotice130Data,
-    prepareAccusedStatementData,
-    prepareAccusedBondTimeRequestData,
+  generateCaseRoznamaPage,
+  prepareInterimBond125126Data,
+  prepareNotice130Data,
+  prepareAccusedStatementData,
+  prepareAccusedBondTimeRequestData,
+  prepareSuretyBond126Data,
+  prepareStatementWitnessData,
+  prepareFinalOrderData
 }

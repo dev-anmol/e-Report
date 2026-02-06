@@ -22,7 +22,7 @@ module.exports.render = function renderStatementAccused(doc, data, text) {
   }
 
   doc
-    .fontSize(13)
+    .font(doc.fonts.regular)
     .text(text.header.govt, { align: "center" })
     .text(text.header.authority, { align: "center" })
     .text(text.header.officeLine, { align: "center" })
@@ -35,7 +35,7 @@ module.exports.render = function renderStatementAccused(doc, data, text) {
    * =========================
    */
   doc
-    .fontSize(14)
+    .font(doc.fonts.bold)
     .text(text.title.main, {
       align: "center",
       underline: true

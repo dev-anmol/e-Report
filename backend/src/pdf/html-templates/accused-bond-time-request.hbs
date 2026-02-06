@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        {
+                {
+                    {
+                    commonCss
+                }
+            }
+        }
+
+        .request-body {
+            margin-top: 30px;
+            text-align: justify;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{logoPath}}" alt="Logo">
+            <h1>महाराष्ट्र शासन</h1>
+            <h2>कार्यकारी दंडाधिकारी तथा उपविभागीय दंडाधिकारी यांचा न्यायालय, {{policeStationName}}</h2>
+        </div>
+
+        <div class="text-center bold" style="font-size: 14pt; margin: 20px 0;">जामीन देण्यासाठी वेळ मिळण्याबाबतचा अर्ज
+        </div>
+
+        <div class="case-info">
+            <div>
+                <p><span class="bold">केस नं:</span> {{caseNumber}}</p>
+            </div>
+            <div class="text-right">
+                <p><span class="bold">तारीख:</span> {{currentDate}}</p>
+            </div>
+        </div>
+
+        <div class="request-body">
+            <p>मेहेरबान कोर्टासमोर,</p>
+
+            <p>मी, <span class="bold">{{accused.name}}</span>, रा. {{accused.address}}, या अर्जाद्वारे विनंती करतो की,
+            </p>
+
+            <p>
+                ज्याअर्थी, माझ्याविरुद्ध पोलीस ठाणे {{policeStationName}} यांनी फौजदारी प्रक्रिया संहिता कलम १०७ / ११०
+                अन्वये प्रतिबंधक कारवाई केली आहे.
+                सदर प्रकरणात मला जामीनदार सादर करण्यासाठी यापूर्वी आदेश देण्यात आले आहेत.
+            </p>
+
+            <p>
+                परंतु, सध्या काही वैयक्तिक अडचणींमुळे मला योग्य जामीनदार मिळण्यास वेळ लागत आहे.
+                त्यामुळे मला जामीनदार सादर करण्यासाठी आणखी <span class="bold">{{requestedDays}}</span> दिवसांचा वेळ
+                मिळावा, ही नम्र विनंती.
+            </p>
+
+            <p>
+                तोपर्यंत मी स्वतःच्या वैयक्तिक बंधपत्रावर मुक्त राहण्यास तयार आहे.
+            </p>
+        </div>
+
+        <div class="footer mt-20">
+            <div class="signature-box">
+                {{#if accused.signature}}
+                <img src="{{accused.signature}}" alt="Signature">
+                {{/if}}
+                <p>सामनेवाला इसम</p>
+            </div>
+            <div class="signature-box">
+                <p class="mt-20">कार्यकारी दंडाधिकारी</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

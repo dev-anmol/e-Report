@@ -62,4 +62,25 @@ async function logout(req, res, next) {
     }
 }
 
-module.exports = { login, refresh, logout }
+async function getMe(req, res, next) {
+    try {
+        const user = await authService.getUserById(req.user.id)
+        if (!user) {
+            return res.status(404).json({ message: "User not found" })
+        }
+
+        res.json({
+            success: true,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        })
+    } catch (err) {
+        next(err)
+    }
+}
+
+module.exports = { login, refresh, logout, getMe }

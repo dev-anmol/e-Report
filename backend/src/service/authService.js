@@ -81,8 +81,14 @@ async function logout({ refreshToken }) {
   })
 }
 
+async function getUserById(userId) {
+  return await User.findById(userId)
+}
+
 module.exports = {
   login,
   refresh,
-  logout
+  logout,
+  getUserById
 }
+

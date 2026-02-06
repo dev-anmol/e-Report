@@ -28,11 +28,14 @@ async function transitionCaseStatus({
 
   // Prevent illegal transitions
   const allowed = VALID_TRANSITIONS[fromStatus] || []
-  if (!allowed.includes(toStatus)) {
+  const isClosing = toStatus === "CLOSED"
+
+  if (!allowed.includes(toStatus) && !isClosing) {
     throw new Error(
       `Invalid case status transition: ${fromStatus} → ${toStatus}`
     )
   }
+
 
   // Update case
   caseData.status = toStatus
