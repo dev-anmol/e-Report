@@ -44,6 +44,19 @@ export async function loginAction(
 
 
 
+export async function getMeAction() {
+    try {
+        const res = await serverFetch<{ success: boolean; user: { id: string; name: string; email: string; role: 'ADMIN' | 'OFFICER' } }>("/me");
+        return { success: true, data: res.user };
+    } catch (error) {
+        console.error("Error fetching user info:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to fetch user info",
+        };
+    }
+}
+
 export async function logoutAction() {
     try {
         await serverFetch("/logout", { method: "POST" });

@@ -53,6 +53,8 @@ app.get("/", (req, res) => {
 });
 
 // Routes
+app.use("/storage", express.static("storage"))
+
 app.use("/", authRoutes)
 app.use("/", caseRoutes)
 app.use("/", personRoutes)

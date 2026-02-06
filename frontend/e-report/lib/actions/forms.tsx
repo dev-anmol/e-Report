@@ -109,6 +109,22 @@ export async function getFormsByCaseAction(caseId: string) {
   }
 }
 
+// Get pending forms (Admin Only)
+export async function getPendingFormsAction() {
+  try {
+    const result = await serverFetch<GetFormsResponse>("/admin/forms/pending");
+    return { success: true, data: result.forms };
+  } catch (error) {
+    console.error("Error fetching pending forms:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to fetch pending forms",
+      data: [],
+    };
+  }
+}
+
+
 // Get single form by ID
 export async function getFormByIdAction(formId: string) {
   try {
@@ -123,3 +139,78 @@ export async function getFormByIdAction(formId: string) {
     };
   }
 }
+
+// Roznama Entry (Admin Only)
+export async function addRoznamaEntryAction(
+  caseId: string,
+  entry: {
+    date: string;
+    proceedings: string;
+    nextDate?: string;
+    presentAccusedPersonIds?: string[];
+  },
+  header?: {
+    branchChapterCaseNo: string;
+    policeChapterCaseNo: string;
+    policeStationName: string;
+    sections: string[];
+    applicant: string;
+    defendants: string[];
+  },
+  shouldCloseCase?: boolean
+) {
+  try {
+    const result = await serverFetch(`/cases/${caseId}/roznama/entries`, {
+      method: "POST",
+      body: { entry, header, shouldCloseCase },
+    });
+
+    return { success: true, data: result };
+  } catch (error) {
+
+    console.error("Error adding roznama entry:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to add roznama entry",
+    };
+  }
+}
+
+// Issue Case File (Admin Only)
+export async function issueCaseFileAction(caseId: string, caseFileNumber: string) {
+  try {
+    const result = await serverFetch<{ success: boolean; pdfPath: string }>(
+      "/api/casefiles/issue",
+      {
+        method: "POST",
+        body: { caseId, caseFileNumber },
+      }
+    );
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error("Error issuing case file:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to issue case file",
+    };
+  }
+}
+
+// Get Case File (for status check and download link)
+export async function getCaseFileAction(caseId: string) {
+  try {
+    const result = await serverFetch<{ success: boolean; caseFile: any }>(
+      `/cases/${caseId}/casefile`
+    );
+
+    return { success: true, data: result.caseFile };
+  } catch (error) {
+    console.error("Error fetching case file:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to fetch case file",
+    };
+  }
+}
+

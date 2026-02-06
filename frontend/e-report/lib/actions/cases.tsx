@@ -166,3 +166,31 @@ export async function getCasesAction() {
     };
   }
 }
+
+// ======================
+// PREVIEW FULL CASE PDF
+// ======================
+interface PreviewFullCaseResponse {
+  success: boolean;
+  pdfPath: string;
+}
+
+export async function previewFullCaseAction(caseId: string) {
+  try {
+    const result = await serverFetch<PreviewFullCaseResponse>(
+      `/cases/${caseId}/preview-pdf`,
+      {
+        method: "POST",
+      }
+    );
+
+    return { success: true, pdfPath: result.pdfPath };
+  } catch (error) {
+    console.error("Error previewing case PDF:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to generate preview",
+    };
+  }
+}

@@ -1,23 +1,24 @@
 const caseFileService = require("../service/caseFileService")
 const Form = require("../model/form")
+const CaseFile = require("../model/caseFile")
 const { transitionCaseStatus } = require("../service/caseStatusService")
 
 /* =========================
    GET PENDING FORMS
    ========================= */
-   async function getPendingForms(req, res, next) {
-    try {
-      const forms = await Form.find({ status: "SUBMITTED" })
-        .sort({ createdAt: -1 })
-        .populate("caseId", "branchCaseNumber sections status")
-        .populate("createdBy", "name role")
-  
-      res.json({ success: true, forms })
-    } catch (err) {
-      next(err)
-    }
+async function getPendingForms(req, res, next) {
+  try {
+    const forms = await Form.find({ status: "SUBMITTED" })
+      .sort({ createdAt: -1 })
+      .populate("caseId", "branchCaseNumber sections status")
+      .populate("createdBy", "name role")
+
+    res.json({ success: true, forms })
+  } catch (err) {
+    next(err)
   }
-  
+}
+
 
 /* =========================
    APPROVE FORM
@@ -167,10 +168,46 @@ async function issueCaseFileController(req, res) {
   }
 }
 
+async function previewFullCasePdfController(req, res) {
+  try {
+    const { caseId } = req.params
+    const pdfPath = await caseFileService.previewFullCasePdf({ caseId })
+
+    res.json({
+      success: true,
+      pdfPath
+    })
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    })
+  }
+}
+
+async function getCaseFileByCaseId(req, res, next) {
+  try {
+    const { caseId } = req.params
+    const caseFile = await CaseFile.findOne({ caseId })
+      .sort({ createdAt: -1 })
+
+    if (!caseFile) {
+      return res.status(404).json({ message: "Case file not found" })
+    }
+
+    res.json({ success: true, caseFile })
+  } catch (err) {
+    next(err)
+  }
+}
+
 module.exports = {
   getPendingForms,
   approveForm,
   rejectForm,
   getFormForAdmin,
-  issueCaseFileController
+  issueCaseFileController,
+  getCaseFileByCaseId,
+  previewFullCasePdfController
 }
+

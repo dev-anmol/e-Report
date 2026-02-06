@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        {{{commonCss}}}
+        
+        .roznama-table td {
+            padding: 12px 8px;
+        }
+        
+        .signature-list {
+            margin-top: 5px;
+            font-size: 9pt;
+        }
+        
+        .signature-item {
+            margin-bottom: 8px;
+            display: inline-block;
+            margin-right: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{logoPath}}" alt="Logo">
+            <h1>महाराष्ट्र शासन</h1>
+            <h2>कार्यकारी दंडाधिकारी तथा उपविभागीय दंडाधिकारी यांचा न्यायालय, {{header.policeStationName}}</h2>
+        </div>
+
+        <div class="case-info">
+            <div>
+                <p><span class="bold">शाखा चॅप्टर केस नं:</span> {{header.branchChapterCaseNo}}</p>
+                <p><span class="bold">पोलीस ठाणे:</span> {{header.policeStationName}}</p>
+                <p><span class="bold">कलम:</span> {{header.sections}}</p>
+            </div>
+            <div class="text-right">
+                <p><span class="bold">पोलीस चॅप्टर केस नं:</span> {{header.policeChapterCaseNo}}</p>
+                <p><span class="bold">अर्जदार:</span> {{header.applicant}}</p>
+            </div>
+        </div>
+
+        <div class="mb-20">
+            <p><span class="bold">सामनेवाला इसम:</span> {{header.defendants}}</p>
+        </div>
+
+        <table class="roznama-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">तारीख</th>
+                    <th style="width: 55%;">कामकाज</th>
+                    <th style="width: 30%;">स्वाक्षरी (सामनेवाला इसम)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each entries}}
+                <tr>
+                    <td class="bold">{{this.date}}</td>
+                    <td>
+                        {{this.proceedings}}
+                        {{#if this.nextDate}}
+                        <br><br>
+                        <span class="bold">पुढील तारीख: {{this.nextDate}}</span>
+                        {{/if}}
+                    </td>
+                    <td>
+                        <div class="signature-list">
+                            {{#each this.presentAccused}}
+                            <div class="signature-item">
+                                {{#if this.signature}}
+                                <img src="{{this.signature}}" style="height: 30px; display: block; margin: 0 auto;">
+                                {{else}}
+                                <div style="height: 30px;"></div>
+                                {{/if}}
+                                {{this.name}}
+                            </div>
+                            {{/each}}
+                        </div>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+
+        <div class="footer">
+            <div class="signature-box">
+                <p>कारकुन</p>
+            </div>
+            <div class="signature-box">
+                <div class="stamp">कोर्ट शिक्का</div>
+                <p class="mt-20">कार्यकारी दंडाधिकारी</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

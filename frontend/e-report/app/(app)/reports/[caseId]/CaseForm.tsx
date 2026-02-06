@@ -2,15 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp, User, Users, FileText, UserPlus, ArrowLeft } from "lucide-react";
+import { ChevronDown, ChevronUp, User, Users, FileText, UserPlus, ArrowLeft, BookOpen, Download, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getCaseByIdAction, getPersonsByCaseAction, Case, Person } from "@/lib/actions/cases";
-import { getFormsByCaseAction } from "@/lib/actions/forms";
+import { getCaseByIdAction, getPersonsByCaseAction, previewFullCaseAction, Case, Person } from "@/lib/actions/cases";
+import { getFormsByCaseAction, issueCaseFileAction, getCaseFileAction } from "@/lib/actions/forms";
+import { getMeAction } from "@/lib/actions/auth";
 import ApplicantForm from "@/components/forms/ApplicantForm";
 import DefendantsForm from "@/components/forms/DefendantsForm";
 import WitnessesForm from "@/components/forms/WitnessesForm";
 import FormsSection from "@/components/forms/FormsSection";
+import RoznamaForm from "@/components/forms/sub-forms/RoznamaForm";
 
 // Mock data
 const MOCK_CASE: Case = {
@@ -154,7 +156,11 @@ export default function CaseForm({ caseId }: CaseFormProps) {
   const [caseData, setCaseData] = useState<Case | null>(null);
   const [persons, setPersons] = useState<Person[]>([]);
   const [forms, setForms] = useState<Form[]>([]);
+  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
+  const [caseFile, setCaseFile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [issuing, setIssuing] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refreshForms = async () => {
@@ -174,10 +180,24 @@ export default function CaseForm({ caseId }: CaseFormProps) {
     const fetchData = async () => {
       try {
         setLoading(true);
+        // Fetch current user
+        const userResult = await getMeAction();
+        if (userResult.success) {
+          setCurrentUser(userResult.data as any);
+        }
+
         // Fetch case details
         const caseResult = await getCaseByIdAction(caseId);
         if (caseResult.success) {
           setCaseData(caseResult.data as Case);
+
+          // If case is CLOSED, fetch CaseFile
+          if ((caseResult.data as Case).status === "CLOSED") {
+            const cfResult = await getCaseFileAction(caseId);
+            if (cfResult.success) {
+              setCaseFile(cfResult.data);
+            }
+          }
         }
 
         // Fetch persons
@@ -271,6 +291,82 @@ export default function CaseForm({ caseId }: CaseFormProps) {
             </p>
           </div>
         </div>
+
+        {/* Admin Actions */}
+        {currentUser?.role === "ADMIN" && displayCase.status !== "CLOSED" && (
+          <div className="mt-6 pt-6 border-t border-accent/20 flex flex-wrap gap-4">
+            <Button
+              onClick={async () => {
+                if (!confirm("Are you sure you want to close this case and issue the final PDF?")) return;
+                setIssuing(true);
+                try {
+                  const timestamp = Date.now();
+                  const res = await issueCaseFileAction(caseId, `CF-${displayCase.branchCaseNumber.replace(/\//g, "-")}-${timestamp}`);
+                  if (res.success) {
+
+                    alert("Case closed and file issued!");
+                    window.location.reload();
+                  } else {
+                    alert(res.error || "Failed to issue case file");
+                  }
+                } finally {
+                  setIssuing(false);
+                }
+              }}
+              disabled={issuing || previewing}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <FileCheck className="mr-2 h-4 w-4" />
+              {issuing ? "Issuing..." : "Issue Final Case File & Close Case"}
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={async () => {
+                setPreviewing(true);
+                try {
+                  const res = await previewFullCaseAction(caseId);
+                  if (res.success && res.pdfPath) {
+                    window.open(`http://localhost:8099/${res.pdfPath}`, "_blank");
+                  } else {
+                    alert(res.error || "Failed to generate preview");
+                  }
+                } finally {
+                  setPreviewing(false);
+                }
+              }}
+              disabled={issuing || previewing}
+              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {previewing ? "Generating..." : "Preview Full Case PDF"}
+            </Button>
+          </div>
+        )}
+
+        {/* Download Link for Closed Cases */}
+        {displayCase.status === "CLOSED" && caseFile && (
+          <div className="mt-6 pt-6 border-t border-accent/20 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-green-600 font-semibold">
+              <FileCheck size={20} />
+              <span>Case Closed & File Issued</span>
+            </div>
+            <Button
+              asChild
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <a
+                href={`http://localhost:8099/${caseFile.pdf?.path}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download Final Case PDF
+              </a>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Error Message */}
@@ -311,6 +407,26 @@ export default function CaseForm({ caseId }: CaseFormProps) {
         >
           <WitnessesForm caseId={caseId} existingWitnesses={witnesses} />
         </ExpandableSection>
+
+        {/* Roznama Section - ADMIN ONLY */}
+        {currentUser?.role === "ADMIN" && (
+          <ExpandableSection
+            title="Roznama (Proceedings)"
+            icon={BookOpen}
+            count={forms.filter(f => f.formType === "CASE_ROZNAMA").length}
+            variant="default"
+          >
+            <RoznamaForm
+              caseId={caseId}
+              caseData={displayCase}
+              defendants={defendants}
+              applicant={applicant || null}
+              isFirstEntry={forms.filter(f => f.formType === "CASE_ROZNAMA").length === 0}
+              onSuccess={refreshForms}
+            />
+            {/* Display existing entries if any - simplify for now by just showing form count above */}
+          </ExpandableSection>
+        )}
 
         {/* Forms Section - CONDITIONAL RENDERING */}
         {canShowForms ? (

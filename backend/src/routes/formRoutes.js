@@ -12,7 +12,7 @@ const {
 } = require("../controller/formController")
 
 router.use(auth)
-router.use(requireRole("OFFICER"))
+router.use(requireRole("OFFICER", "ADMIN"))
 
 router.post("/cases/:caseId/forms", createForm)
 router.put("/forms/:formId", updateForm)
