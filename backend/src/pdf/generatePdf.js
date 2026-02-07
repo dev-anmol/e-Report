@@ -12,7 +12,14 @@ async function generatePdf({ pages, outputPath, mode = "DRAFT" }) {
     "utf-8"
   )
 
-  const logoPath = "file://" + path.resolve(process.cwd(), "src/assets/logos/MHlogo.png")
+  let logoPath = "file://" + path.resolve(process.cwd(), "src/assets/logos/MHlogo.png")
+  try {
+    const logoFile = path.resolve(process.cwd(), "src/assets/logos/MHlogo.png")
+    const logoBuffer = await fs.readFile(logoFile)
+    logoPath = `data:image/png;base64,${logoBuffer.toString("base64")}`
+  } catch (err) {
+    // Fallback to file:// path if base64 fails
+  }
 
   const puppeteerPages = pages.map((page) => {
     const templateName = page.type.toLowerCase().replace(/_/g, "-")
@@ -28,18 +35,27 @@ async function generatePdf({ pages, outputPath, mode = "DRAFT" }) {
     }
 
     // Fix absolute paths for signatures if they exist
+    const normalizeSignature = (sig) => {
+      if (!sig) return sig
+      if (sig.startsWith("http://") || sig.startsWith("https://") || sig.startsWith("data:")) {
+        return sig
+      }
+      if (sig.startsWith("file://")) return sig
+      return "file://" + path.resolve(process.cwd(), sig)
+    }
+
     if (data.accused?.signature) {
-      data.accused.signature = "file://" + path.resolve(process.cwd(), data.accused.signature)
+      data.accused.signature = normalizeSignature(data.accused.signature)
     }
     if (data.surety?.signature) {
-      data.surety.signature = "file://" + path.resolve(process.cwd(), data.surety.signature)
+      data.surety.signature = normalizeSignature(data.surety.signature)
     }
     if (data.entries) {
       data.entries = data.entries.map(entry => ({
         ...entry,
         presentAccused: entry.presentAccused?.map(p => ({
           ...p,
-          signature: p.signature ? "file://" + path.resolve(process.cwd(), p.signature) : null
+          signature: p.signature ? normalizeSignature(p.signature) : null
         }))
       }))
     }

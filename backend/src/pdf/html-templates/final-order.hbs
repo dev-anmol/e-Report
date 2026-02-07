@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        {{{commonCss}}}
+
+        .order-body {
+            margin-top: 20px;
+            text-align: justify;
+        }
+
+        .info-grid {
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{logoPath}}" alt="Logo">
+            <h1>महाराष्ट्र शासन</h1>
+            <h2>कार्यकारी दंडाधिकारी तथा उपविभागीय दंडाधिकारी यांचा न्यायालय, {{policeStationName}}</h2>
+        </div>
+
+        <div class="text-center bold" style="font-size: 14pt;">अंतिम आदेश</div>
+
+        <div class="info-grid">
+            <p><span class="bold">केस नं:</span> {{caseNumber}}</p>
+            <p><span class="bold">कलम:</span> {{sections}}</p>
+            <p><span class="bold">सुनावणी दिनांक:</span> {{hearingDate}}</p>
+        </div>
+
+        <div class="order-body">
+            <p><span class="bold">आदेश प्रकार:</span> {{outcomeType}}</p>
+
+            {{#if outcome.bondAmount}}
+            <p>जामीन रक्कम: <span class="bold">₹{{outcome.bondAmount}}</span></p>
+            {{/if}}
+
+            {{#if outcome.bondDurationMonths}}
+            <p>जामीन कालावधी: <span class="bold">{{outcome.bondDurationMonths}}</span> महिने</p>
+            {{/if}}
+
+            {{#if outcome.suretyRequired}}
+            <p>जामीनदार आवश्यक: <span class="bold">होय</span></p>
+            {{/if}}
+
+            {{#if outcome.suretyCount}}
+            <p>जामीनदार संख्या: <span class="bold">{{outcome.suretyCount}}</span></p>
+            {{/if}}
+
+            {{#if outcome.nextHearingDate}}
+            <p>पुढील सुनावणी दिनांक: <span class="bold">{{outcome.nextHearingDate}}</span></p>
+            {{/if}}
+
+            {{#if outcome.nextHearingPlace}}
+            <p>पुढील सुनावणी ठिकाण: <span class="bold">{{outcome.nextHearingPlace}}</span></p>
+            {{/if}}
+
+            <p class="mt-20"><span class="bold">नोंद:</span> {{remarks}}</p>
+        </div>
+
+        <div class="footer mt-20">
+            <div class="signature-box">
+                <div class="stamp">न्यायालय शिक्का</div>
+                <p class="mt-20">कार्यकारी दंडाधिकारी</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
