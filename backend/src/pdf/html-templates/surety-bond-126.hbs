@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        {{{commonCss}}}
+
+        .bond-body {
+            margin-top: 20px;
+            text-align: justify;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{logoPath}}" alt="Logo">
+            <h1>महाराष्ट्र शासन</h1>
+            <h2>कार्यकारी दंडाधिकारी तथा उपविभागीय दंडाधिकारी यांचा न्यायालय, {{policeStationName}}</h2>
+        </div>
+
+        <div class="text-center bold" style="font-size: 14pt;">जामीनदार जामीनपत्र (कलम १२६ नुसार)</div>
+
+        <div class="case-info">
+            <div>
+                <p><span class="bold">केस नं:</span> {{caseNumber}}</p>
+            </div>
+            <div class="text-right">
+                <p><span class="bold">तारीख:</span> {{currentDate}}</p>
+            </div>
+        </div>
+
+        <div class="bond-body">
+            <p>आरोपी: <span class="bold">{{accused.name}}</span>, पत्ता: {{accused.address}}</p>
+
+            <p>
+                जामीन रक्कम: <span class="bold">₹{{amount}}</span> /
+                कालावधी: <span class="bold">{{durationMonths}}</span> महिने /
+                जामीनदार संख्या: <span class="bold">{{suretyCount}}</span>
+            </p>
+
+            <p>
+                वरील आरोपीसाठी आवश्यक जामीनदारांची हमी देण्याचा आदेश मान्य आहे.
+            </p>
+
+            <div class="mt-20">
+                <p><span class="bold">येथे आरोपीची स्वाक्षरी:</span></p>
+                <div class="signature-box" style="text-align: left;">
+                    {{#if accused.signature}}
+                    <img src="{{accused.signature}}" alt="Signature">
+                    {{/if}}
+                    <p>{{accused.name}}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer mt-20">
+            <div class="signature-box">
+                <div class="stamp">न्यायालय शिक्का</div>
+                <p class="mt-20">कार्यकारी दंडाधिकारी</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
