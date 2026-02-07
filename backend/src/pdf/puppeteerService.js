@@ -1,4 +1,5 @@
-const puppeteer = require("puppeteer")
+const puppeteer = require("puppeteer-core")
+const chromium = require("@sparticuz/chromium")
 const handlebars = require("handlebars")
 const fs = require("fs-extra")
 const path = require("path")
@@ -14,8 +15,10 @@ class PuppeteerService {
     async init() {
         if (!this.browser) {
             this.browser = await puppeteer.launch({
-                headless: "new",
-                args: ["--no-sandbox", "--disable-setuid-sandbox"]
+                args: chromium.args,
+                defaultViewport: chromium.defaultViewport,
+                executablePath: await chromium.executablePath(),
+                headless: chromium.headless
             })
         }
     }

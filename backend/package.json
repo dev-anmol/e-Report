@@ -22,7 +22,8 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "pdfkit": "^0.17.2",
-    "puppeteer": "^24.37.2",
+    "@sparticuz/chromium": "^135.0.0",
+    "puppeteer-core": "^24.37.2",
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
