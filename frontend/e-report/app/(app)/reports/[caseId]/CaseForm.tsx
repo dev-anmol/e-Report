@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, User, Users, FileText, UserPlus, ArrowLeft, BookOpen, Download, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getCaseByIdAction, getPersonsByCaseAction, previewFullCaseAction, Case, Person } from "@/lib/actions/cases";
+import { getCaseByIdAction, getPersonsByCaseAction, Case, Person } from "@/lib/actions/cases";
 import { getFormsByCaseAction, issueCaseFileAction, getCaseFileAction } from "@/lib/actions/forms";
 import { getMeAction } from "@/lib/actions/auth";
 import ApplicantForm from "@/components/forms/ApplicantForm";
@@ -325,12 +325,7 @@ export default function CaseForm({ caseId }: CaseFormProps) {
               onClick={async () => {
                 setPreviewing(true);
                 try {
-                  const res = await previewFullCaseAction(caseId);
-                  if (res.success && res.pdfPath) {
-                    window.open(`http://localhost:8099/${res.pdfPath}`, "_blank");
-                  } else {
-                    alert(res.error || "Failed to generate preview");
-                  }
+                  window.open(`/api/preview/${caseId}`, "_blank");
                 } finally {
                   setPreviewing(false);
                 }

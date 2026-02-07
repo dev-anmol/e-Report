@@ -171,17 +171,14 @@ async function issueCaseFileController(req, res) {
 async function previewFullCasePdfController(req, res) {
   try {
     const { caseId } = req.params
-    const pdfPath = await caseFileService.previewFullCasePdf({ caseId })
+    const pdfBuffer = await caseFileService.previewFullCasePdf({ caseId })
+    const buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer)
 
-    res.json({
-      success: true,
-      pdfPath
-    })
+    res.setHeader("Content-Type", "application/pdf")
+    res.setHeader("Content-Disposition", "inline; filename=preview.pdf")
+    res.end(buffer)
   } catch (err) {
-    res.status(400).json({
-      success: false,
-      message: err.message
-    })
+    res.status(400).json({ success: false, message: err.message })
   }
 }
 
@@ -210,4 +207,3 @@ module.exports = {
   getCaseFileByCaseId,
   previewFullCasePdfController
 }
-

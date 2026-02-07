@@ -84,6 +84,10 @@ async function generatePdf({ pages, outputPath, mode = "DRAFT" }) {
     }
   }
 
+  if (!outputPath) {
+    return { buffer: result.buffer }
+  }
+
   return { path: outputPath }
 }
 

@@ -14,11 +14,23 @@ class PuppeteerService {
 
     async init() {
         if (!this.browser) {
+            const explicitPath =
+                process.env.PUPPETEER_EXECUTABLE_PATH ||
+                process.env.CHROME_PATH ||
+                process.env.GOOGLE_CHROME_PATH;
+            const executablePath = explicitPath || await chromium.executablePath();
+            const args = explicitPath
+                ? ["--no-sandbox", "--disable-setuid-sandbox"]
+                : chromium.args;
+            const defaultViewport = explicitPath
+                ? { width: 1280, height: 720 }
+                : chromium.defaultViewport;
+            const headless = explicitPath ? "new" : chromium.headless;
             this.browser = await puppeteer.launch({
-                args: chromium.args,
-                defaultViewport: chromium.defaultViewport,
-                executablePath: await chromium.executablePath(),
-                headless: chromium.headless
+                args,
+                defaultViewport,
+                executablePath,
+                headless
             })
         }
     }
@@ -107,7 +119,6 @@ class PuppeteerService {
             await page.setContent(fullHtml, { waitUntil: "networkidle0" })
 
             const defaultOptions = {
-                path: outputPath,
                 format: "A4",
                 printBackground: true,
                 margin: {
@@ -118,8 +129,13 @@ class PuppeteerService {
                 }
             }
 
-            await page.pdf({ ...defaultOptions, ...pdfOptions })
-            return { path: outputPath }
+            const options = { ...defaultOptions, ...pdfOptions }
+            if (outputPath) {
+                options.path = outputPath
+            }
+
+            const buffer = await page.pdf(options)
+            return outputPath ? { path: outputPath, buffer } : { buffer }
         } finally {
             await page.close()
         }
