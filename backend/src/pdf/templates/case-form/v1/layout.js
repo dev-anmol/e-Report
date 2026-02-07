@@ -23,7 +23,7 @@ module.exports.render = function renderNotice130(doc, data, text) {
   }
 
   doc
-    .fontSize(13)
+    .font(doc.fonts.regular)
     .text(text.header.govt, { align: "center" })
     .text(
       `${text.header.authority} ${data.officer.office}`,
@@ -40,9 +40,9 @@ module.exports.render = function renderNotice130(doc, data, text) {
    */
 
   doc
-    .fontSize(14)
+    .font(doc.fonts.bold)
     .text(text.title.main, { align: "center", underline: true })
-    .fontSize(11)
+    .font(doc.fonts.regular)
     .text(text.title.section, { align: "center" })
 
   doc.moveDown(2)

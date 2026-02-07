@@ -26,6 +26,7 @@ export async function createApplicant(formData: FormData) {
 
         // Create new FormData for API - reconstruct properly
         const apiFormData = new FormData();
+        apiFormData.append("caseId", caseId); // Add caseId to body
         apiFormData.append("name", name);
         apiFormData.append("role", role);
         apiFormData.append("age", age);
@@ -44,7 +45,7 @@ export async function createApplicant(formData: FormData) {
             apiFormData.append("document", document, document.name);
         }
 
-        const result = await serverFetchMultipart<{ 
+        const result = await serverFetchMultipart<{
             success: boolean;
             personId: string;
             files: {

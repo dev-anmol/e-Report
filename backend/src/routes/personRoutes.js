@@ -4,7 +4,7 @@ const router = express.Router();
 const auth = require("../middleware/authMiddleware");
 const uploadMiddleware = require("../middleware/uploadMiddleware");
 
-const { updatePerson, deletePerson, createPerson } = require("../controller/personController");
+const { updatePerson, deletePerson, createPerson, getPersonsByCase } = require("../controller/personController");
 
 const {
   uploadSignature,
@@ -19,6 +19,11 @@ router.post(
   "/cases/:caseId/persons",
   uploadMiddleware.uploadPersonFiles,
   createPerson
+);
+
+router.get(
+  "/cases/:caseId/persons",
+  getPersonsByCase
 );
 
 router.put(

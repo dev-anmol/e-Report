@@ -5,6 +5,7 @@ const cors = require("cors")
 const helmet = require("helmet")
 const morgan = require("morgan")
 const cookieParser = require("cookie-parser")
+const xss = require("xss-clean");
 
 const connectDB = require("./config/mongoConfig")
 const authRoutes = require("./routes/authRoutes")
@@ -13,6 +14,7 @@ const personRoutes = require("./routes/personRoutes")
 const policeStationRoutes = require("./routes/policeStationRoutes")
 const formRoutes = require("./routes/formRoutes")
 const adminRoutes = require("./routes/adminRoutes")
+const rateLimiter = require("./middleware/rateLimitterMiddleware");
 
 const app = express()
 
@@ -21,7 +23,7 @@ const app = express()
 // multer needs to handle multipart data, then express.json() for json
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-app.use(cookieParser())  
+app.use(cookieParser())
 app.use(cors({
   origin: true,
   credentials: true
@@ -30,12 +32,29 @@ app.use(helmet())
 app.use(morgan("dev"))
 
 
+app.use(
+  cors({
+    origin: ["http://localhost:3000"],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// XSS protection
+app.use(xss());
+
+// Global Rate Limiter
+app.use(rateLimiter);
+
 // Health check
 app.get("/", (req, res) => {
   res.send("E-Report API is running 🚀");
 });
 
 // Routes
+app.use("/storage", express.static("storage"))
+
 app.use("/", authRoutes)
 app.use("/", caseRoutes)
 app.use("/", personRoutes)
@@ -48,10 +67,10 @@ app.use((err, req, res, next) => {
   console.error("=== Global Error Handler ===");
   console.error("Error:", err.message);
   console.error("Stack:", err.stack);
-  
+
   const statusCode = err.statusCode || 500;
   const message = err.message || "Internal Server Error";
-  
+
   res.status(statusCode).json({
     success: false,
     message,
@@ -59,7 +78,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = 8082;
+const PORT = 8099;
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

@@ -1,9 +1,10 @@
 "use client"
 
 import {
-  Bot,
+  Plus,
   Settings2,
-  SquareTerminal
+  SquareTerminal,
+  FolderOpen
 } from "lucide-react"
 import * as React from "react"
 
@@ -13,6 +14,8 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
@@ -33,32 +36,11 @@ const data = {
       hasChilds: false
     },
     {
-      title: "Reports",
-      url: "#",
-      icon: Bot,
-      hasChilds: true,
-      items: [
-        {
-          title: "Roznama Form",
-          url: `/reports/section-1`,
-        },
-        {
-          title: "Notice Form",
-          url: "/reports/section-2",
-        },
-        {
-          title: "Interim Form",
-          url: "/reports/section-3",
-        },
-        {
-          title: "Statement Form",
-          url: "/reports/section-4",
-        },
-        {
-          title: "BondTime Form",
-          url: "/reports/section-5",
-        },
-      ],
+      title: "Cases",
+      url: '/cases',
+      icon: FolderOpen,
+      isActive: true, // Keep it active or conditional? Probably leave as is for now or set false. The previous one was true.
+      hasChilds: false
     },
     {
       title: "Analyze",
@@ -77,6 +59,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
+        {/* New Case Quick Action */}
+        <SidebarGroup className="px-2 py-2">
+          <SidebarGroupContent>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

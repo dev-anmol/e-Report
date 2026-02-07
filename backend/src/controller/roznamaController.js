@@ -1,5 +1,7 @@
 const Form = require("../model/form")
 const Case = require("../model/case")
+const caseFileService = require("../service/caseFileService")
+const { transitionCaseStatus } = require("../service/caseStatusService")
 
 /**
  * POST /cases/:caseId/roznama/entries
@@ -9,7 +11,7 @@ const Case = require("../model/case")
 async function addRoznamaEntry(req, res, next) {
   try {
     const { caseId } = req.params
-    const { entry, header } = req.body
+    const { entry, header, shouldCloseCase, caseFileNumber } = req.body
 
     if (!entry?.date || !entry?.proceedings) {
       return res.status(400).json({
@@ -51,6 +53,7 @@ async function addRoznamaEntry(req, res, next) {
         caseId,
         formType: "CASE_ROZNAMA",
         createdBy: req.user.id,
+        status: "APPROVED",
         content: {
           mr: {
             header: {
@@ -77,17 +80,42 @@ async function addRoznamaEntry(req, res, next) {
       presentAccusedPersonIds: entry.presentAccusedPersonIds || []
     })
 
+    roznamaForm.markModified("content")
     await roznamaForm.save()
+
+    /* =========================
+       CLOSE CASE IF REQUESTED
+       ========================= */
+    if (shouldCloseCase) {
+      const issuedBy = req.user.id
+      const finalCaseFileNumber = caseFileNumber || `CF-${caseData.branchCaseNumber.replace(/\//g, "-")}-${Date.now()}`
+
+      await caseFileService.issueCaseFile({
+        caseId,
+        caseFileNumber: finalCaseFileNumber,
+        issuedBy
+      })
+
+      // FINAL STATUS → CLOSED
+      await transitionCaseStatus({
+        caseId,
+        toStatus: "CLOSED",
+        performedBy: issuedBy,
+        remarks: "Case closed via Roznama final entry"
+      })
+    }
 
     res.json({
       success: true,
       createdRoznama: isFirstEntry,
-      totalEntries: roznamaForm.content.mr.entries.length
+      totalEntries: roznamaForm.content.mr.entries.length,
+      caseClosed: !!shouldCloseCase
     })
   } catch (err) {
     next(err)
   }
 }
+
 
 module.exports = {
   addRoznamaEntry

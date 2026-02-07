@@ -17,11 +17,8 @@ router.post(
   createCase
 )
 
-<<<<<<< HEAD
-=======
-router.post("/cases", createCase)
-router.get("/cases", getMyCases)
-router.get("/cases/:caseId", getCaseById)
+router.get("/cases", auth, getMyCases)
+router.get("/cases/:caseId", auth, getCaseById)
 
 >>>>>>> origin/staging
 module.exports = router

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        {{{commonCss}}}
+
+        .bond-body {
+            margin-top: 20px;
+            text-align: justify;
+        }
+
+        .section-title {
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 15px 0 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{logoPath}}" alt="Logo">
+            <h1>महाराष्ट्र शासन</h1>
+            <h2>कार्यकारी दंडाधिकारी तथा उपविभागीय दंडाधिकारी यांचा न्यायालय, {{policeStationName}}</h2>
+        </div>
+
+        <div class="text-center bold" style="font-size: 14pt;">वैयक्तिक जामीनपत्र (कलम १२५ नुसार)</div>
+
+        <div class="case-info">
+            <div>
+                <p><span class="bold">केस नं:</span> {{caseNumber}}</p>
+            </div>
+            <div class="text-right">
+                <p><span class="bold">तारीख:</span> {{currentDate}}</p>
+            </div>
+        </div>
+
+        <div class="bond-body">
+            <p>मी, <span class="bold">{{accused.name}}</span>, रा. {{accused.address}}, या न्यायालयात प्रतिज्ञापूर्वक
+                लिहून देतो की,</p>
+
+            <p>
+                ज्याअर्थी, माझ्याविरुद्ध पोलीस ठाणे {{policeStationName}} यांनी फौजदारी प्रक्रिया संहिता कलम १०७ / ११०
+                अन्वये कारवाई सुरू केली आहे.
+            </p>
+
+            <p>
+                मी शांतता राखीन व चांगल्या वर्तणुकीचे पालन करीन. उल्लंघन झाल्यास मी सरकारला रक्कम रु.
+                <span class="bold">{{amount}}/-</span> दंड म्हणून देण्यास बांधील राहीन.
+            </p>
+
+            <p>
+                जामीन कालावधी: <span class="bold">{{durationMonths}}</span> महिने.
+            </p>
+
+            <div class="mt-20">
+                <p><span class="bold">येथे आरोपीची स्वाक्षरी:</span></p>
+                <div class="signature-box" style="text-align: left;">
+                    {{#if accused.signature}}
+                    <img src="{{accused.signature}}" alt="Signature">
+                    {{/if}}
+                    <p>{{accused.name}}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer mt-20">
+            <div class="signature-box">
+                <div class="stamp">न्यायालय शिक्का</div>
+                <p class="mt-20">कार्यकारी दंडाधिकारी</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

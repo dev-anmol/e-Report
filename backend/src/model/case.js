@@ -29,14 +29,14 @@ const caseSchema = new mongoose.Schema(
 
     policeStationId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "policestation",
+      ref: "Policestation",
       required: true,
       index: true
     },
 
     officerId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: "User",
       required: true,
       index: true
     },

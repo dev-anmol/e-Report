@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        {{{commonCss}}}
+
+        .statement-body {
+            margin-top: 20px;
+            text-align: justify;
+        }
+
+        .info-grid {
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{logoPath}}" alt="Logo">
+            <h1>महाराष्ट्र शासन</h1>
+            <h2>कार्यकारी दंडाधिकारी तथा उपविभागीय दंडाधिकारी यांचा न्यायालय, {{policeStationName}}</h2>
+        </div>
+
+        <div class="text-center bold" style="font-size: 14pt;">सामनेवाला इसमाचा जाबजबाब</div>
+
+        <div class="info-grid">
+            <p><span class="bold">नाव:</span> {{accused.name}}</p>
+            <p><span class="bold">वय:</span> {{accused.age}} वर्षे</p>
+            <p><span class="bold">पत्ता:</span> {{accused.address}}</p>
+            <p><span class="bold">व्यवसाय:</span> {{accused.occupation}}</p>
+        </div>
+
+        <div class="statement-body">
+            <p>
+                मी, <span class="bold">{{accused.name}}</span>, प्रतिज्ञापूर्वक लिहून देतो की,
+                मला विचारलेल्या प्रश्नांची उत्तरे मी खालीलप्रमाणे सत्य देत आहे:
+            </p>
+
+            <p class="bold mt-20">प्रश्न १: आपल्याविरुद्ध पोलीस ठाणे {{policeStationName}} यांनी सादर केलेल्या
+                अहवालाबाबत आपले काय म्हणणे आहे?</p>
+            <p>उत्तर: {{answer1}}</p>
+
+            <p class="bold mt-20">प्रश्न २: आपल्याला चांगल्या वर्तणुकीसाठी जामीन देण्याचे सांगण्यात आले आहे, त्याबाबत
+                आपले काय म्हणणे आहे?</p>
+            <p>उत्तर: {{answer2}}</p>
+
+            <p class="mt-20">
+                सदर जाबजबाब मी वाचला असून तो माझ्या सांगण्याप्रमाणे बरोबर लिहिला आहे.
+            </p>
+        </div>
+
+        <div class="footer mt-20">
+            <div class="signature-box">
+                {{#if accused.signature}}
+                <img src="{{accused.signature}}" alt="Signature">
+                {{/if}}
+                <p>सामनेवाला इसम</p>
+            </div>
+            <div class="signature-box">
+                <p class="mt-20">कार्यकारी दंडाधिकारी</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -3,9 +3,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const BASE_URL = "https://e-report-t9xh.onrender.com"
-// const BASE_URL = "localhost:8099";
-
+// const BASE_URL = "https://e-report-t9xh.onrender.com"
+const BASE_URL = "http://localhost:8099";
 
 async function refreshAccessToken() {
   try {
@@ -31,7 +30,9 @@ async function refreshAccessToken() {
     return data.accessToken;
   } catch (error) {
     (await cookies()).delete("accessToken");
-    redirect("/login");
+    // Re-throw the error instead of calling redirect
+    // This will be caught in serverFetch and handled properly
+    throw new Error("Session expired. Please login again.");
   }
 }
 
@@ -101,8 +102,10 @@ export async function serverFetchMultipart<T>(
     }
   }
 
-  const makeRequest = (token?: string) =>
-    fetch(`${BASE_URL}${endpoint}`, {
+  const makeRequest = (token?: string) => {
+    const fullUrl = `${BASE_URL}${endpoint}`;
+    console.log("Full Request URL:", fullUrl);
+    return fetch(fullUrl, {
       method: "POST",
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -112,11 +115,12 @@ export async function serverFetchMultipart<T>(
       cache: "no-store",
       credentials: "include",
     });
+  };
 
   let res = await makeRequest(accessToken);
 
   console.log("Response status:", res.status);
-  
+
   if (res.status === 401) {
     try {
       accessToken = await refreshAccessToken();
