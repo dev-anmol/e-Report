@@ -316,12 +316,8 @@ async function previewFullCasePdf({ caseId }) {
     }
   }
 
-  const outputPath = path.join("storage", "previews", `preview-${caseId}-${Date.now()}.pdf`)
-  const dir = path.dirname(outputPath)
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-
-  await generatePdf({ pages, outputPath, mode: "PREVIEW" })
-  return outputPath
+  const pdfResult = await generatePdf({ pages, mode: "PREVIEW" })
+  return pdfResult.buffer
 }
 
 module.exports = {
