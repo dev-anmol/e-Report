@@ -70,8 +70,9 @@ export default function AnalyticsPage() {
     setDigestLoading(true);
     const res = await getAIDigest(force);
     if (res.success) {
-      setDigest(res.data?.digest || res.data);
-      setDigestCached(Boolean(res.data?.cached));
+      const data = res.data as any;
+      setDigest(data?.digest || data);
+      setDigestCached(Boolean(data?.cached));
     }
     setDigestLoading(false);
   };
@@ -81,8 +82,9 @@ export default function AnalyticsPage() {
     setSummaryLoading(true);
     const res = await getCaseSummary(caseId, force);
     if (res.success) {
-      setSummary(res.data?.summary || res.data);
-      setSummaryCached(Boolean(res.data?.cached));
+      const data = res.data as any;
+      setSummary(data?.summary || data);
+      setSummaryCached(Boolean(data?.cached));
     }
     setSummaryLoading(false);
   };
