@@ -44,7 +44,7 @@ const data = {
     },
     {
       title: "Analyze",
-      url: "#",
+      url: "/analytics",
       icon: Settings2,
       hasChilds: false
     },

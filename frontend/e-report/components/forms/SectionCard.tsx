@@ -62,7 +62,7 @@ export function SectionCard({
   return (
     <div
       className={cn(
-        "rounded-lg border-2 transition-all duration-300 overflow-hidden",
+        "rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden",
         isEnabled ? styles.enabled : styles.disabled,
         className
       )}

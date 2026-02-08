@@ -14,6 +14,7 @@ const personRoutes = require("./routes/personRoutes")
 const policeStationRoutes = require("./routes/policeStationRoutes")
 const formRoutes = require("./routes/formRoutes")
 const adminRoutes = require("./routes/adminRoutes")
+const analyticsRoutes = require("./routes/analyticsRoutes")
 const rateLimiter = require("./middleware/rateLimitterMiddleware");
 
 const app = express()
@@ -61,6 +62,7 @@ app.use("/", personRoutes)
 app.use("/", policeStationRoutes)
 app.use("/", formRoutes)
 app.use("/", adminRoutes)
+app.use("/", analyticsRoutes)
 
 // Global error handler
 app.use((err, req, res, next) => {
